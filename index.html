@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robyn Miller Instruments</title>
+<meta name="description" content="The magic of physical modeling: synths and effects by Robyn Miller.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #111; --soft: #6b6b6b; --hair: #c9c9c6;
+    --page: #f0f0ee; --bar: #ffffff; --screen: #000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: var(--page); color: var(--ink); font-family: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+         font-weight: 300; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* ---- the bar */
+  .bar { background: var(--bar); height: 176px; display: flex; align-items: center;
+         padding: 0 32px; position: relative; z-index: 2; }
+  .lists { display: flex; gap: clamp(28px, 5vw, 64px); }
+  .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; }
+  .lists ul { list-style: none; }
+  .lists li { font-size: 14px; line-height: 1.55; }
+  .lists a { color: var(--soft); text-decoration: none; transition: color .15s; }
+  .lists a:hover { color: var(--ink); }
+  .bar .badge { position: absolute; right: 0; top: -82px; width: 400px; height: 340px; border: 0;
+                background: transparent; }
+
+  /* ---- the headline */
+  h1 { font-weight: 300; font-size: clamp(42px, 7.2vw, 104px); line-height: 1.02; letter-spacing: -0.02em;
+       text-align: center; padding: clamp(56px, 9vw, 120px) 24px clamp(40px, 6vw, 80px); }
+
+  /* ---- the instruments */
+  .demo { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .switch { display: flex; justify-content: center; gap: clamp(18px, 4vw, 48px); margin-bottom: 22px; }
+  .switch button { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--soft);
+                   padding: 6px 2px; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
+  .switch button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .screen { position: relative; background: var(--screen); border-radius: 14px; overflow: hidden;
+            aspect-ratio: 1190 / 638; }
+  .screen { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .pane { position: absolute; inset: 0; }
+  .pane.slide { transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .12s linear;
+                pointer-events: none; -webkit-user-drag: none; }
+  .controls { display: grid; gap: 22px; margin: 26px auto 0; max-width: 640px; }
+  .slider label { display: block; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--soft);
+                  text-align: center; margin-bottom: 10px; }
+  .slider .ends { display: flex; justify-content: space-between; font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+                  color: var(--soft); margin-top: 8px; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
+  input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+                                            background: var(--ink); margin-top: -8.5px; border: 0; }
+  input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 0; }
+  .transport { display: flex; justify-content: center; margin-top: 18px; }
+  .play { width: 44px; height: 44px; display: grid; place-items: center; transition: opacity .2s; }
+  .play:hover { opacity: .55; }
+  .play svg { width: 18px; height: 18px; fill: currentColor; }
+  .play.loading { opacity: .4; pointer-events: none; }
+
+  /* ---- the words */
+  .words { max-width: 1120px; margin: 0 auto; padding: clamp(36px, 4.5vw, 60px) 24px clamp(70px, 9vw, 120px); text-align: center;
+           font-size: clamp(21px, 2.55vw, 36px); line-height: 1.28; }
+  .words p + p { margin-top: 1.1em; }
+
+  /* ---- the films */
+  .films { max-width: 1200px; margin: 0 auto; padding: 0 24px 120px; }
+  .films h2 { font-weight: 300; font-size: clamp(30px, 3.6vw, 52px); letter-spacing: -0.01em; text-align: center;
+              margin: 70px 0 34px; }
+  .films .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px 32px; }
+  .films .grid .lone { grid-column: 1 / -1; width: calc(50% - 16px); justify-self: center; }   /* an odd one out, centred */
+  figure video { width: 100%; display: block; background: #000; border-radius: 10px; aspect-ratio: 16 / 9; }
+  figcaption { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--soft); margin-top: 12px; text-align: center; }
+
+  @media (max-width: 640px) {
+    .bar { height: 150px; padding: 0 16px; }
+    .lists { gap: 22px; }
+    .lists h3 { font-size: 10px; margin-bottom: 6px; }
+    .lists li { font-size: 12.5px; line-height: 1.5; }
+    .bar .badge { width: 190px; height: 180px; top: -15px; right: 0; }
+    .films .grid, .films .grid .lone { grid-template-columns: 1fr; grid-column: auto; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <nav class="lists" id="lists" aria-label="The instruments"></nav>
+  <iframe class="badge" src="assets/logo-header.html" title="Robyn Miller Instruments" scrolling="no" allowtransparency="true"></iframe>
+</header>
+
+<h1>The Magic of Physical Modeling</h1>
+
+<section class="demo" aria-label="Three instruments to play with">
+  <nav class="switch" id="switch">
+    <button data-inst="clarinet" aria-pressed="true">Clarinet</button>
+    <button data-inst="piano" aria-pressed="false">Piano</button>
+    <button data-inst="strings" aria-pressed="false">Bass</button>
+  </nav>
+  <div class="screen" id="screen"><div class="pane" id="pane"><img id="imgA" alt=""><img id="imgB" alt="" style="opacity:0"></div></div>
+  <div class="controls" id="controls"></div>
+  <div class="transport"><button class="play" id="play" aria-label="Play">
+    <svg viewBox="0 0 20 20" id="playIcon"><path d="M5 3 L17 10 L5 17 Z"/></svg></button></div>
+</section>
+
+<section class="words">
+  <p>After decades of composing, I've begun making the exact synths and effects that I want.</p>
+  <p>I'm a huge fan of physically modeled sounds. In other words, an acoustical model of the instrument or space, created inside a digital space. This type of synthesis is easy to adjust and comprehend. And it's fun.</p>
+  <p>Currently we're in alpha. Stay tuned.</p>
+</section>
+
+<section class="films" id="films"></section>
+
+<script>
+/* ---------------------------------------------------------------- the instruments
+   Every sound here is the real plug-in, recorded at a row of settings along the
+   slider (a grid of two for the piano). All of an instrument's recordings play
+   together; the slider crossfades the nearest ones, so the instrument changes
+   shape while it plays. Pictures are the plug-in's own drawing at each setting. */
+const INST = {
+  clarinet: { dir: 'assets/clarinet', sliders: [{ label: 'Size', ends: ['Clarinet', 'Saxophone'], value: 0 }] },
+  piano:    { dir: 'assets/piano', sliders: [{ label: 'String length', ends: ['Short', 'Long'], value: 1 },
+                                            { label: 'Strike / pluck', ends: ['Hammer', 'Pluck'], value: 0 }] },
+  strings:  { dir: 'assets/strings', sliders: [{ label: 'Body', ends: ['Bass', 'Violin'], value: 0 }] },
+};
+
+let ctx = null, master = null, current = 'clarinet', playing = false, timer = null;
+const state = {};            // per instrument: meta, buffers, gains, values, live sources, next start
+
+const $ = id => document.getElementById(id);
+const imgA = $('imgA'), imgB = $('imgB');
+let showing = imgA;
+
+async function meta(name) {
+  const s = state[name] || (state[name] = { values: INST[name].sliders.map(x => x.value) });
+  if (!s.meta) s.meta = await (await fetch(`${INST[name].dir}/meta.json`)).json();
+  return s;
+}
+
+function imgIndex(name) {
+  const s = state[name], m = s.meta;
+  if (m.kind === 'row') return Math.round(s.values[0] * (m.nImg - 1));
+  return Math.round(s.values[0] * (m.rows - 1)) * m.cols + Math.round(s.values[1] * (m.cols - 1));
+}
+
+function showPicture(name) {
+  const src = `${INST[name].dir}/i${imgIndex(name)}.jpg`;
+  if (showing.getAttribute('src') === src) return Promise.resolve();
+  const next = showing === imgA ? imgB : imgA;
+  return new Promise(done => {
+    next.onload = () => { next.style.opacity = 1; showing.style.opacity = 0; showing = next; done(); };
+    next.onerror = done;
+    next.src = src;
+  });
+}
+
+/* switching instruments wipes the picture sideways: the old one leaves, the new one arrives */
+const ORDER = ['clarinet', 'piano', 'strings'];
+async function wipe(name, dir) {
+  const screen = $('screen'), pane = $('pane');
+  const old = pane.cloneNode(true);
+  old.removeAttribute('id'); old.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+  screen.appendChild(old);
+  pane.classList.remove('slide'); pane.style.transform = `translateX(${dir * 100}%)`;
+  await showPicture(name);
+  await new Promise(r => setTimeout(r, 130));          // the crossfade inside the pane is over before it moves
+  pane.getBoundingClientRect();
+  pane.classList.add('slide'); old.classList.add('slide');
+  pane.style.transform = 'translateX(0)'; old.style.transform = `translateX(${-dir * 100}%)`;
+  setTimeout(() => old.remove(), 560);
+}
+
+function weights(name) {
+  const s = state[name], m = s.meta;
+  if (m.kind === 'row') {
+    const n = m.nAudio, w = new Array(n).fill(0), x = s.values[0] * (n - 1), i = Math.min(n - 2, Math.floor(x)), t = x - i;
+    w[i] = Math.cos(t * Math.PI / 2); w[i + 1] = Math.sin(t * Math.PI / 2);
+    return w;
+  }
+  const R = m.rows, C = m.cols, w = new Array(R * C).fill(0);
+  const x = s.values[0] * (R - 1), y = s.values[1] * (C - 1);
+  const i = Math.min(R - 2, Math.floor(x)), j = Math.min(C - 2, Math.floor(y)), a = x - i, b = y - j;
+  // bilinear, square-rooted: equal power across the four nearest
+  [[i, j, (1 - a) * (1 - b)], [i + 1, j, a * (1 - b)], [i, j + 1, (1 - a) * b], [i + 1, j + 1, a * b]]
+    .forEach(([r, c, v]) => { w[r * C + c] = Math.sqrt(v); });
+  return w;
+}
+
+function applyWeights(name, now) {
+  const s = state[name];
+  if (!s.gains) return;
+  weights(name).forEach((v, k) => s.gains[k].gain.setTargetAtTime(v, now ?? ctx.currentTime, 0.03));
+}
+
+async function loadAudio(name) {
+  const s = await meta(name);
+  if (s.buffers) return s;
+  const m = s.meta, n = m.kind === 'row' ? m.nAudio : m.rows * m.cols;
+  s.buffers = await Promise.all(Array.from({ length: n }, async (_, k) =>
+    ctx.decodeAudioData(await (await fetch(`${INST[name].dir}/a${k}.m4a`)).arrayBuffer())));
+  return s;
+}
+
+function schedule() {
+  const s = state[current];
+  if (!playing || !s || !s.buffers) return;
+  while (s.next < ctx.currentTime + 0.35) {
+    s.buffers.forEach((b, k) => {
+      const src = ctx.createBufferSource();
+      src.buffer = b; src.connect(s.gains[k]); src.start(s.next);
+      src.onended = () => s.live.delete(src);
+      s.live.add(src);
+    });
+    s.next += s.meta.loop;
+  }
+}
+
+async function start() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -8; comp.ratio.value = 10; comp.attack.value = 0.003; comp.release.value = 0.15;
+    master = ctx.createGain(); master.gain.value = 0.9;
+    master.connect(comp).connect(ctx.destination);
+  }
+  if (ctx.state === 'suspended') await ctx.resume();
+  const name = current;
+  $('play').classList.add('loading');
+  const s = await loadAudio(name);
+  $('play').classList.remove('loading');
+  if (name !== current) return;
+  s.bus = ctx.createGain(); s.bus.connect(master);
+  s.gains = s.buffers.map(() => { const g = ctx.createGain(); g.gain.value = 0; g.connect(s.bus); return g; });
+  s.live = new Set();
+  applyWeights(name, ctx.currentTime);
+  s.next = ctx.currentTime + 0.08;
+  playing = true; setIcon();
+  schedule();
+  timer = setInterval(schedule, 60);
+}
+
+function stop(name = current) {
+  const s = state[name];
+  clearInterval(timer); timer = null;
+  playing = false; setIcon();
+  if (!s || !s.bus) return;
+  const now = ctx.currentTime, bus = s.bus, live = [...s.live];
+  bus.gain.setTargetAtTime(0, now, 0.06);
+  setTimeout(() => { live.forEach(x => { try { x.stop(); } catch (e) {} }); bus.disconnect(); }, 400);
+  s.bus = null; s.gains = null; s.live = new Set();
+}
+
+function setIcon() {
+  $('playIcon').innerHTML = playing ? '<path d="M5 3h3.5v14H5zM11.5 3H15v14h-3.5z"/>' : '<path d="M5 3 L17 10 L5 17 Z"/>';
+  $('play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+
+async function choose(name, dir = 0) {
+  const was = playing;
+  if (playing) stop();
+  current = name;
+  document.querySelectorAll('#switch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.inst === name));
+  const s = await meta(name);
+  const box = $('controls'); box.innerHTML = '';
+  INST[name].sliders.forEach((sl, k) => {
+    const el = document.createElement('div'); el.className = 'slider';
+    el.innerHTML = `<label>${sl.label}</label><input type="range" min="0" max="1" step="0.001" value="${s.values[k]}">
+                    <div class="ends"><span>${sl.ends[0]}</span><span>${sl.ends[1]}</span></div>`;
+    el.querySelector('input').addEventListener('input', e => {
+      s.values[k] = +e.target.value; showPicture(name); if (ctx) applyWeights(name);
+    });
+    box.appendChild(el);
+  });
+  // preload this instrument's pictures, so a drag never waits for one
+  const m = s.meta, nImg = m.kind === 'row' ? m.nImg : m.rows * m.cols;
+  for (let k = 0; k < nImg; k++) { const im = new Image(); im.src = `${INST[name].dir}/i${k}.jpg`; }
+  dir ? wipe(name, dir) : showPicture(name);
+  // only one instrument's recordings are kept: a phone has little room
+  for (const other in state) if (other !== name && state[other].buffers && !state[other].bus) state[other].buffers = null;
+  if (was) start();
+}
+
+$('switch').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b && b.dataset.inst !== current) choose(b.dataset.inst, ORDER.indexOf(b.dataset.inst) > ORDER.indexOf(current) ? 1 : -1);
+});
+// a finger (or the mouse) swept across the picture: left brings the next instrument, right the one before
+let sweep = null;
+$('screen').addEventListener('pointerdown', e => { sweep = { x: e.clientX, y: e.clientY }; });
+$('screen').addEventListener('pointerup', e => {
+  if (!sweep) return;
+  const dx = e.clientX - sweep.x, dy = e.clientY - sweep.y; sweep = null;
+  if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+  const dir = dx < 0 ? 1 : -1, n = ORDER.length;
+  choose(ORDER[(ORDER.indexOf(current) + dir + n) % n], dir);
+});
+$('screen').addEventListener('pointercancel', () => { sweep = null; });
+$('play').addEventListener('click', () => playing ? stop() : start());
+choose('clarinet');
+
+/* ---------------------------------------------------------------- the films */
+const FILMS = [
+  ['Synths', [['piano', 'Piano'], ['breath-and-bow', 'Breath and Bow'], ['the-voice-2', 'The Voice 2'],
+              ['zkrich', 'ZKRiCH!'], ['flower-pots', 'Flower Pots']]],
+  ['Effects', [['the-can', 'The Can'], ['super-foods', 'Super-Foods'], ['model-500', 'Model 500']]],
+  ['Example Piece', [['ensemble', 'The Ensemble']]],
+];
+// two across; an odd one at the end sits in the middle
+$('films').innerHTML = FILMS.map(([title, list]) => `<h2>${title}</h2><div class="grid">` +
+  list.map(([file, name], k) => `<figure id="film-${file}"${k === list.length - 1 && k % 2 === 0 ? ' class="lone"' : ''}>
+    <video controls preload="none" playsinline poster="media/${file}.jpg">
+    <source src="media/${file}.mp4" type="video/mp4"></video><figcaption>${name}</figcaption></figure>`).join('') + '</div>').join('');
+
+// the lists in the bar: every instrument, each a link to its film
+$('lists').innerHTML = FILMS.slice(0, 2).map(([title, list]) => `<div><h3>${title}</h3><ul>` +
+  list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('');
+$('lists').addEventListener('click', e => {
+  const a = e.target.closest('a'); if (!a) return;
+  e.preventDefault();
+  const el = document.querySelector(a.getAttribute('href'));
+  // inside Squarespace the host page does the scrolling
+  if (parent !== window) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
+  else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+// one film at a time
+document.addEventListener('play', e => {
+  if (e.target.tagName !== 'VIDEO') return;
+  document.querySelectorAll('video').forEach(v => { if (v !== e.target) v.pause(); });
+  if (playing) stop();
+}, true);
+
+/* ---------------------------------------------------------------- inside Squarespace
+   When this page sits in an iframe, tell the host page how tall it is. */
+const tellHeight = () => parent !== window && parent.postMessage({ rmiHeight: document.documentElement.scrollHeight }, '*');
+addEventListener('load', tellHeight); addEventListener('resize', tellHeight);
+new ResizeObserver(tellHeight).observe(document.body);
+</script>
+</body>
+</html>
