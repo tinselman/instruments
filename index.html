@@ -74,7 +74,7 @@
   .words p + p { margin-top: 1.4em; }
 
   /* ---- the films */
-  .films { max-width: 1200px; margin: 0 auto; padding: 0 24px 120px; }
+  .films { max-width: 1200px; margin: 0 auto; padding: 0 24px 90px; }
   .films h2 { font-weight: 300; font-size: clamp(30px, 3.6vw, 52px); letter-spacing: -0.01em; text-align: center;
               margin: 70px 0 34px; }
   /* a contact sheet: the films touch, a hairline between them */
@@ -98,7 +98,11 @@
                     font-weight: 300; opacity: .7; padding: 6px 10px; }
   .theatre .close:hover { opacity: 1; }
 
+  /* ---- the small print */
+  .legal { text-align: center; font-size: 11px; letter-spacing: .02em; color: var(--soft); padding: 0 16px 28px; }
+
   @media (max-width: 640px) {
+    .legal { font-size: 10px; letter-spacing: 0; text-wrap: balance; }   /* one line won't fit a phone readably: two even lines */
     .bar { height: 150px; padding: 0 16px; }
     .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
     .films .grid.one { width: 100%; }
@@ -138,6 +142,8 @@
 </section>
 
 <section class="films" id="films"></section>
+
+<footer class="legal">All plug-ins are copyright© 2026 by Robyn Miller Instruments. All rights reserved. Robyn Miller Instruments is a trademark.</footer>
 
 <div class="theatre" id="theatre" role="dialog" aria-label="Film">
   <button class="close" id="theatreClose" aria-label="Close">&times;</button>
@@ -248,7 +254,17 @@ function schedule() {
   }
 }
 
+/* An iPhone with its silent switch on mutes web audio, treating it like an alert sound. Telling it this
+   is playback (newer Safari), and keeping a silent recording playing (older Safari), lets it be heard. */
+const keepAwake = new Audio('assets/silence.m4a');
+keepAwake.loop = true; keepAwake.preload = 'auto'; keepAwake.setAttribute('playsinline', '');
+function asPlayback() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  keepAwake.play().catch(() => {});
+}
+
 async function start() {
+  asPlayback();
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     const comp = ctx.createDynamicsCompressor();
@@ -274,6 +290,7 @@ async function start() {
 
 function stop(name = current) {
   const s = state[name];
+  keepAwake.pause();
   clearInterval(timer); timer = null;
   playing = false; setIcon();
   if (!s || !s.bus) return;
