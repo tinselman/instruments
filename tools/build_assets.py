@@ -162,6 +162,12 @@ def build(inst):
 def build_state(inst):
     """what the plug-in's drawing sees, 60 times a second, at each recorded setting: the page's
     live drawing replays it in step with the recordings (assets/<inst>/state.json)"""
+    if inst == "piano":
+        # the piano's drawing moves from its notes alone (as the plug-in's does): when each key goes down, how hard, how long
+        notes = [[round(t + 0.05, 3), m(n), round(v / 127, 3), 1.4] for t, n, v in PN_NOTES]
+        json.dump(dict(loop=LOOP_PN, notes=notes), open(os.path.join(HERE, "assets", inst, "state.json"), "w"), separators=(",", ":"))
+        print(inst, "state", len(notes), "notes")
+        return
     shot_fn, loop = (cl_shot, LOOP_CL) if inst == "clarinet" else (st_shot, LOOP_ST)
     out = []
     for k in range(N_AUDIO):
@@ -173,10 +179,14 @@ def build_state(inst):
         for line in open(os.path.join(WORK, n + ".jsonl")):
             d = json.loads(line)
             if d["t"] < bp.LEAD - 1e-6 or d["t"] >= bp.LEAD + loop - 1e-6: continue
-            # [bowPos, bowLift, bowVel, [[sounding semis, level, held, slide], ...], wind player]
-            frames.append([d["bow"][0], d["bow"][1], d["bow"][2],
-                           [[round(v[1] + v[2], 3), float(f"{v[3]:.4g}"), v[4], v[5]] for v in d["v"]]]
-                          + ([d["w"]] if inst == "clarinet" else []))
+            # strings: [bowPos, bowLift, bowVel, [[sounding semis, level, held, slide], ...]]
+            # clarinet: [held, sounding, semis, fingerHz, tubeM, breath, level, mode, fingerMode, fingers, slurs]
+            if inst == "clarinet":     # the woodwind's drawing needs only the wind player
+                w = d["w"]; w[6] = float(f"{w[6]:.4g}")
+                frames.append(w)
+            else:
+                frames.append([d["bow"][0], d["bow"][1], d["bow"][2],
+                               [[round(v[1] + v[2], 3), float(f"{v[3]:.4g}"), v[4], v[5]] for v in d["v"]]])
         out.append(dict(u=u, frames=frames))
     json.dump(dict(fps=60, loop=loop, steps=out), open(os.path.join(HERE, "assets", inst, "state.json"), "w"), separators=(",", ":"))
     print(inst, "state", len(out), "steps", len(out[0]["frames"]), "frames")

@@ -146,6 +146,8 @@
 <section class="films" id="films"></section>
 <script src="assets/live/plate.js"></script>
 <script src="assets/live/strings.js"></script>
+<script src="assets/live/piano.js"></script>
+<script src="assets/live/woodwind.js"></script>
 
 <footer class="legal">All plug-ins are copyright© 2026 by Robyn Miller Instruments. All rights reserved. Robyn Miller Instruments is a trademark.</footer>
 
@@ -161,9 +163,14 @@
    together; the slider crossfades the nearest ones, so the instrument changes
    shape while it plays. Pictures are the plug-in's own drawing at each setting. */
 const INST = {
-  clarinet: { dir: 'assets/clarinet', sliders: [{ label: 'Size', ends: ['Clarinet', 'Saxophone'], value: 0 }] },
+  clarinet: { dir: 'assets/clarinet', sliders: [{ label: 'Size', ends: ['Clarinet', 'Saxophone'], value: 0 }],
+              // drawn live (assets/live/woodwind.js): SIZE, BORE, MATERIAL and BREATH as the recordings set them
+              live: { module: () => window.LiveWoodwind, view: [2.8, -20.05, 989.5, 530.5], body: v => clParams(v[0]) } },
   piano:    { dir: 'assets/piano', sliders: [{ label: 'String length', ends: ['Short', 'Long'], value: 1 },
-                                            { label: 'Strike / pluck', ends: ['Hammer', 'Pluck'], value: 0 }] },
+                                            { label: 'Strike / pluck', ends: ['Hammer', 'Pluck'], value: 0 }],
+              // drawn live (assets/live/piano.js); LENGTH runs through the recorded rows' own values
+              live: { module: () => window.LivePiano, view: [63.26, 95.87, 916.7, 491.1],
+                      body: v => ({ length: through([0.08, 0.3, 0.55, 0.78, 0.95], v[0]), pluck: v[1] }) } },
   strings:  { dir: 'assets/strings', sliders: [{ label: 'Body', ends: ['Bass', 'Violin'], value: 0 }],
               // drawn live: the plug-in's own drawing, ported (assets/live/strings.js)
               live: { module: () => window.LiveStrings, view: [2.8, -20.05, 989.5, 530.5], body: v => 1 - v[0] } },
@@ -355,10 +362,18 @@ async function loadLive(name) {
   if (name === current) { INST[name].live.module().reset(); showPicture(name); }
 }
 const REST = { bowPos: 0, bowLift: 1, bowVel: 0, voices: [] };
+const clParams = u => ({ size: 0.25 + 0.27 * u, bore: u, material: 0.25 + 0.5 * u, breath: 0.10 + 0.05 * u });
+const through = (row, u) => { const x = u * (row.length - 1), i = Math.min(row.length - 2, Math.floor(x)); return row[i] + (row[i + 1] - row[i]) * (x - i); };
 function liveFrame(name) {
   const s = state[name], st = s.states;
-  if (!playing || s.t0 == null || !ctx) return REST;
-  const t = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) - s.t0;
+  const t = (!playing || s.t0 == null || !ctx) ? -1 : ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) - s.t0;
+  if (st.notes) return { t: t < 0 ? null : t % st.loop, notes: st.notes };   // the piano: its notes
+  if (name === 'clarinet') {                     // the woodwind: the wind player, from the nearest recorded setting
+    if (t < 0) return { w: null };
+    const n = st.steps.length, k = Math.round(s.values[0] * (n - 1));
+    const idx = Math.min(st.steps[k].frames.length - 1, Math.floor((t % st.loop) * st.fps));
+    return { w: st.steps[k].frames[idx], stepSize: clParams(st.steps[k].u).size };
+  }
   if (t < 0) return REST;
   const n = st.steps.length, x = s.values[0] * (n - 1), i0 = Math.min(n - 2, Math.floor(x)), f = x - i0;
   const idx = Math.min(st.steps[0].frames.length - 1, Math.floor((t % st.loop) * st.fps));
