@@ -352,7 +352,7 @@ $('lists').addEventListener('click', e => {
   e.preventDefault();
   const el = document.querySelector(a.getAttribute('href'));
   // inside Squarespace the host page does the scrolling
-  if (parent !== window) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
+  if (host) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
   else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 document.querySelectorAll('.films figure').forEach(f => {
