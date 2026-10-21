@@ -49,6 +49,9 @@
   .screen { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
   .pane { position: absolute; inset: 0; }
   .pane.slide { transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
+  .pane canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+  .pane.live canvas { display: block; }
+  .pane.live img { visibility: hidden; }
   .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .12s linear;
                 pointer-events: none; -webkit-user-drag: none; }
   .controls { display: grid; gap: 22px; margin: 26px auto 0; max-width: 640px; }
@@ -128,7 +131,7 @@
     <button data-inst="piano" aria-pressed="false">Piano</button>
     <button data-inst="strings" aria-pressed="false">Bass</button>
   </nav>
-  <div class="screen" id="screen"><div class="pane" id="pane"><img id="imgA" alt=""><img id="imgB" alt="" style="opacity:0"></div></div>
+  <div class="screen" id="screen"><div class="pane" id="pane"><img id="imgA" alt=""><img id="imgB" alt="" style="opacity:0"><canvas id="live" aria-hidden="true"></canvas></div></div>
   <div class="controls" id="controls"></div>
   <div class="transport"><button class="play" id="play" aria-label="Play">
     <svg viewBox="0 0 20 20" id="playIcon"><path d="M5 3 L17 10 L5 17 Z"/></svg></button></div>
@@ -141,6 +144,8 @@
 </section>
 
 <section class="films" id="films"></section>
+<script src="assets/live/plate.js"></script>
+<script src="assets/live/strings.js"></script>
 
 <footer class="legal">All plug-ins are copyright© 2026 by Robyn Miller Instruments. All rights reserved. Robyn Miller Instruments is a trademark.</footer>
 
@@ -159,7 +164,9 @@ const INST = {
   clarinet: { dir: 'assets/clarinet', sliders: [{ label: 'Size', ends: ['Clarinet', 'Saxophone'], value: 0 }] },
   piano:    { dir: 'assets/piano', sliders: [{ label: 'String length', ends: ['Short', 'Long'], value: 1 },
                                             { label: 'Strike / pluck', ends: ['Hammer', 'Pluck'], value: 0 }] },
-  strings:  { dir: 'assets/strings', sliders: [{ label: 'Body', ends: ['Bass', 'Violin'], value: 0 }] },
+  strings:  { dir: 'assets/strings', sliders: [{ label: 'Body', ends: ['Bass', 'Violin'], value: 0 }],
+              // drawn live: the plug-in's own drawing, ported (assets/live/strings.js)
+              live: { module: () => window.LiveStrings, view: [2.8, -20.05, 989.5, 530.5], body: v => 1 - v[0] } },
 };
 
 let ctx = null, master = null, current = 'clarinet', playing = false, timer = null;
@@ -182,6 +189,8 @@ function imgIndex(name) {
 }
 
 function showPicture(name) {
+  if (isLive(name)) { $('pane').classList.add('live'); kick(); return Promise.resolve(); }
+  $('pane').classList.remove('live');
   const src = `${INST[name].dir}/i${imgIndex(name)}.jpg`;
   if (showing.getAttribute('src') === src) return Promise.resolve();
   const next = showing === imgA ? imgB : imgA;
@@ -198,6 +207,8 @@ async function wipe(name, dir) {
   const screen = $('screen'), pane = $('pane');
   const old = pane.cloneNode(true);
   old.removeAttribute('id'); old.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+  const was = old.querySelector('canvas'), cv = $('live');      // a cloned canvas is blank: copy what it shows
+  was.width = cv.width; was.height = cv.height; was.getContext('2d').drawImage(cv, 0, 0);
   screen.appendChild(old);
   pane.classList.remove('slide'); pane.style.transform = `translateX(${dir * 100}%)`;
   await showPicture(name);
@@ -282,7 +293,8 @@ async function start() {
   s.live = new Set();
   applyWeights(name, ctx.currentTime);
   s.next = ctx.currentTime + 0.08;
-  playing = true; setIcon();
+  s.t0 = s.next;                                   // the live drawing's clock starts with the recording
+  playing = true; setIcon(); kick();
   schedule();
   timer = setInterval(schedule, 60);
 }
@@ -291,7 +303,7 @@ function stop(name = current) {
   const s = state[name];
   keepAwake.pause();
   clearInterval(timer); timer = null;
-  playing = false; setIcon();
+  playing = false; setIcon(); kick(1500);
   if (!s || !s.bus) return;
   const now = ctx.currentTime, bus = s.bus, live = [...s.live];
   bus.gain.setTargetAtTime(0, now, 0.06);
@@ -310,13 +322,14 @@ async function choose(name, dir = 0) {
   current = name;
   document.querySelectorAll('#switch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.inst === name));
   const s = await meta(name);
+  if (INST[name].live) loadLive(name);
   const box = $('controls'); box.innerHTML = '';
   INST[name].sliders.forEach((sl, k) => {
     const el = document.createElement('div'); el.className = 'slider';
     el.innerHTML = `<label>${sl.label}</label><input type="range" min="0" max="1" step="0.001" value="${s.values[k]}">
                     <div class="ends"><span>${sl.ends[0]}</span><span>${sl.ends[1]}</span></div>`;
     el.querySelector('input').addEventListener('input', e => {
-      s.values[k] = +e.target.value; showPicture(name); if (ctx) applyWeights(name);
+      s.values[k] = +e.target.value; showPicture(name); if (ctx) applyWeights(name); kick();
     });
     box.appendChild(el);
   });
@@ -328,6 +341,56 @@ async function choose(name, dir = 0) {
   for (const other in state) if (other !== name && state[other].buffers && !state[other].bus) state[other].buffers = null;
   if (was) start();
 }
+
+/* ---------------------------------------------------------------- the live drawings
+   The plug-in's engine, recorded 60 times a second at each recorded setting (state.json):
+   where the bow is, which notes sound and how loud. Replayed in step with the recording,
+   it moves the drawing: the bow crossing the strings, the fingers, the strings shaking. */
+function isLive(name) { const L = INST[name].live; return !!(L && L.module() && state[name] && state[name].states); }
+async function loadLive(name) {
+  const s = state[name];
+  if (s.states || s.loadingStates) return;
+  s.loadingStates = true;
+  try { s.states = await (await fetch(`${INST[name].dir}/state.json`)).json(); } catch (e) { s.loadingStates = false; return; }
+  if (name === current) { INST[name].live.module().reset(); showPicture(name); }
+}
+const REST = { bowPos: 0, bowLift: 1, bowVel: 0, voices: [] };
+function liveFrame(name) {
+  const s = state[name], st = s.states;
+  if (!playing || s.t0 == null || !ctx) return REST;
+  const t = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) - s.t0;
+  if (t < 0) return REST;
+  const n = st.steps.length, x = s.values[0] * (n - 1), i0 = Math.min(n - 2, Math.floor(x)), f = x - i0;
+  const idx = Math.min(st.steps[0].frames.length - 1, Math.floor((t % st.loop) * st.fps));
+  const a = st.steps[i0].frames[idx], b = st.steps[i0 + 1].frames[idx], near = st.steps[Math.round(x)].frames[idx];
+  // the bow between the two nearest settings; the notes from the nearest (its octave)
+  return { bowPos: a[0] + (b[0] - a[0]) * f, bowLift: a[1] + (b[1] - a[1]) * f, bowVel: a[2] + (b[2] - a[2]) * f,
+           voices: near[3].map(v => ({ sounding: v[0], level: v[1], held: v[2], slide: v[3] })) };
+}
+let raf = 0, idleUntil = 0, lastDraw = 0, clockT = 0, onScreen = true;
+function kick(ms = 1200) { idleUntil = Math.max(idleUntil, performance.now() + ms); if (!raf) raf = requestAnimationFrame(drawLive); }
+function drawLive(now) {
+  raf = 0;
+  const name = current, L = INST[name].live;
+  if (!isLive(name)) return;
+  const dt = Math.min(0.05, lastDraw ? (now - lastDraw) / 1000 : 1 / 60);
+  lastDraw = now; clockT += dt;
+  if (onScreen) {
+    const cv = $('live'), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (w && h) {
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+      const g = cv.getContext('2d'), [X0, Y0, W, H] = L.view, k = Math.min(w / W, h / H);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+      g.setTransform(k, 0, 0, k, (w - W * k) / 2 - X0 * k, (h - H * k) / 2 - Y0 * k);
+      L.module().draw(g, L.body(state[name].values), liveFrame(name), dt, clockT);
+    }
+  }
+  if (playing || now < idleUntil) raf = requestAnimationFrame(drawLive);
+  else lastDraw = 0;
+}
+// scrolled out of sight, it stops drawing
+new IntersectionObserver(es => { onScreen = es[0].isIntersecting; if (onScreen) kick(); }).observe($('screen'));
 
 $('switch').addEventListener('click', e => {
   const b = e.target.closest('button');

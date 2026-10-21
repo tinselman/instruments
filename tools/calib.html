@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>calib</title>
+<body style="margin:0;background:#222">
+<canvas id="c" width="1190" height="638" style="display:block"></canvas>
+<img id="ref" src="../assets/strings/i0.jpg" style="display:block">
+<script src="../assets/live/plate.js"></script>
+<script src="../assets/live/strings.js"></script>
+<script>
+window.drawAt = function (body, frame, X0, Y0, s) {
+  const c = document.getElementById('c'), g = c.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+  g.setTransform(s, 0, 0, s, -X0 * s, -Y0 * s);
+  LiveStrings.reset();
+  return LiveStrings.draw(g, body, frame, 1 / 60, 0);
+};
+</script>

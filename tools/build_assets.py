@@ -159,7 +159,31 @@ def build(inst):
     print(inst, "done", len(os.listdir(out)), "files")
 
 
+def build_state(inst):
+    """what the plug-in's drawing sees, 60 times a second, at each recorded setting: the page's
+    live drawing replays it in step with the recordings (assets/<inst>/state.json)"""
+    shot_fn, loop = (cl_shot, LOOP_CL) if inst == "clarinet" else (st_shot, LOOP_ST)
+    out = []
+    for k in range(N_AUDIO):
+        u = k / (N_AUDIO - 1); n = f"{inst}_s{k}"
+        s = shot_fn(u, n, "", bp.LEAD + loop + 0.2)
+        s.update(fps=60, state=f"work/{n}.jsonl")
+        run(TOUCH, s, n)
+        frames = []
+        for line in open(os.path.join(WORK, n + ".jsonl")):
+            d = json.loads(line)
+            if d["t"] < bp.LEAD - 1e-6 or d["t"] >= bp.LEAD + loop - 1e-6: continue
+            # [bowPos, bowLift, bowVel, [[sounding semis, level, held, slide], ...], wind player]
+            frames.append([d["bow"][0], d["bow"][1], d["bow"][2],
+                           [[round(v[1] + v[2], 3), float(f"{v[3]:.4g}"), v[4], v[5]] for v in d["v"]]]
+                          + ([d["w"]] if inst == "clarinet" else []))
+        out.append(dict(u=u, frames=frames))
+    json.dump(dict(fps=60, loop=loop, steps=out), open(os.path.join(HERE, "assets", inst, "state.json"), "w"), separators=(",", ":"))
+    print(inst, "state", len(out), "steps", len(out[0]["frames"]), "frames")
+
+
 IMG_ONLY = "--img" in sys.argv          # pictures only: the recordings stay
 
 if __name__ == "__main__":
-    for inst in ([a for a in sys.argv[1:] if not a.startswith("--")] or ["clarinet", "piano", "strings"]): build(inst)
+    for inst in ([a for a in sys.argv[1:] if not a.startswith("--")] or ["clarinet", "piano", "strings"]):
+        build_state(inst) if "--state" in sys.argv else build(inst)
