@@ -11,7 +11,7 @@
 <style>
   :root {
     --ink: #111; --soft: #6b6b6b; --hair: #c9c9c6;
-    --page: #f0f0ee; --bar: #ffffff; --screen: #000;
+    --page: #f0f0ee; --bar: #000; --screen: #000;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -20,15 +20,18 @@
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
   /* ---- the bar */
-  .bar { background: var(--bar); height: 176px; display: flex; align-items: center;
+  .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
          padding: 0 32px; position: relative; z-index: 2; }
   .lists { display: flex; gap: clamp(28px, 5vw, 64px); }
-  .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; }
+  .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: #f2efea; }
   .lists ul { list-style: none; }
   .lists li { font-size: 14px; line-height: 1.55; }
-  .lists a { color: var(--soft); text-decoration: none; transition: color .15s; }
-  .lists a:hover { color: var(--ink); }
-  .bar .badge { position: absolute; right: 0; top: -82px; width: 400px; height: 340px; border: 0;
+  .lists a { color: #9b9a96; text-decoration: none; transition: color .15s; }
+  .lists a:hover { color: #fff; }
+  /* the badge's frame is wider than the badge (room for its shapes to orbit); it stands past the
+     right edge, so a window trims that part off rather than letting the page scroll sideways */
+  .badgebox { position: absolute; right: 0; top: -45px; width: 330px; height: 340px; overflow: hidden; pointer-events: none; }
+  .bar .badge { position: absolute; left: 0; top: 0; width: 400px; height: 340px; border: 0; pointer-events: auto;
                 background: transparent; }
 
   /* ---- the headline */
@@ -60,32 +63,50 @@
                                             background: var(--ink); margin-top: -8.5px; border: 0; }
   input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 0; }
   .transport { display: flex; justify-content: center; margin-top: 18px; }
-  .play { width: 44px; height: 44px; display: grid; place-items: center; transition: opacity .2s; }
-  .play:hover { opacity: .55; }
-  .play svg { width: 18px; height: 18px; fill: currentColor; }
+  .play { width: 64px; height: 64px; display: grid; place-items: center; color: #f82c1c; transition: opacity .2s; }  /* the plug-ins' red */
+  .play:hover { opacity: .7; }
+  .play svg { width: 34px; height: 34px; fill: currentColor; }
   .play.loading { opacity: .4; pointer-events: none; }
 
   /* ---- the words */
-  .words { max-width: 1120px; margin: 0 auto; padding: clamp(36px, 4.5vw, 60px) 24px clamp(70px, 9vw, 120px); text-align: center;
-           font-size: clamp(21px, 2.55vw, 36px); line-height: 1.28; }
-  .words p + p { margin-top: 1.1em; }
+  .words { max-width: 780px; margin: 0 auto; padding: clamp(36px, 4.5vw, 60px) 24px clamp(70px, 9vw, 120px); text-align: center;
+           font-size: clamp(21px, 2.55vw, 36px); line-height: 2; }
+  .words p + p { margin-top: 1.4em; }
 
   /* ---- the films */
   .films { max-width: 1200px; margin: 0 auto; padding: 0 24px 120px; }
   .films h2 { font-weight: 300; font-size: clamp(30px, 3.6vw, 52px); letter-spacing: -0.01em; text-align: center;
               margin: 70px 0 34px; }
-  .films .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px 32px; }
-  .films .grid .lone { grid-column: 1 / -1; width: calc(50% - 16px); justify-self: center; }   /* an odd one out, centred */
-  figure video { width: 100%; display: block; background: #000; border-radius: 10px; aspect-ratio: 16 / 9; }
-  figcaption { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--soft); margin-top: 12px; text-align: center; }
+  /* a contact sheet: the films touch, a hairline between them */
+  .films .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; }
+  .films .grid figure { grid-column: span 2; }                                  /* three across */
+  .films .grid.two-three figure:nth-child(-n+2) { grid-column: span 3; }        /* two, then three */
+  .films .grid.one { grid-template-columns: 1fr; width: 50%; margin: 0 auto; }
+  .films .grid.one figure { grid-column: auto; }
+  .films figure { position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden; cursor: pointer; }
+  .films figure video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .films .name { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .films .name span { color: #fff; font-weight: 300; font-size: clamp(13px, 1.45vw, 20px); letter-spacing: .14em;
+                      text-transform: uppercase; border: 1px solid rgba(255, 255, 255, .9); padding: .6em 1.1em .55em;
+                      background: rgba(0, 0, 0, .18); }
+
+  /* a film, opened: the browser window filled; the player's own button goes full screen */
+  .theatre { position: fixed; inset: 0; z-index: 100; background: #000; display: none; }
+  .theatre.open { display: block; }
+  .theatre video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .theatre .close { position: absolute; top: 14px; right: 18px; z-index: 1; color: #fff; font-size: 34px; line-height: 1;
+                    font-weight: 300; opacity: .7; padding: 6px 10px; }
+  .theatre .close:hover { opacity: 1; }
 
   @media (max-width: 640px) {
     .bar { height: 150px; padding: 0 16px; }
+    .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
+    .films .grid.one { width: 100%; }
     .lists { gap: 22px; }
     .lists h3 { font-size: 10px; margin-bottom: 6px; }
     .lists li { font-size: 12.5px; line-height: 1.5; }
-    .bar .badge { width: 190px; height: 180px; top: -15px; right: 0; }
-    .films .grid, .films .grid .lone { grid-template-columns: 1fr; grid-column: auto; width: 100%; }
+    .badgebox { width: 190px; height: 180px; top: -15px; right: 0; }
+    .bar .badge { width: 190px; height: 180px; }
   }
 </style>
 </head>
@@ -93,7 +114,7 @@
 
 <header class="bar">
   <nav class="lists" id="lists" aria-label="The instruments"></nav>
-  <iframe class="badge" src="assets/logo-header.html" title="Robyn Miller Instruments" scrolling="no" allowtransparency="true"></iframe>
+  <div class="badgebox"><iframe class="badge" src="assets/logo-header.html" title="Robyn Miller Instruments" scrolling="no" allowtransparency="true"></iframe></div>
 </header>
 
 <h1>The Magic of Physical Modeling</h1>
@@ -111,12 +132,17 @@
 </section>
 
 <section class="words">
-  <p>After decades of composing, I've begun making the exact synths and effects that I want.</p>
-  <p>I'm a huge fan of physically modeled sounds. In other words, an acoustical model of the instrument or space, created inside a digital space. This type of synthesis is easy to adjust and comprehend. And it's fun.</p>
-  <p>Currently we're in alpha. Stay tuned.</p>
+  <p>Here at RMI, we are currently creating and testing a collection of synths and effects. Our philosophy: make instruments that are human. And fun. If you’re a rocket scientist, maybe you’ll enjoy them too.</p>
+  <p>We’re fans of physically modeled sounds. What does that mean? Nothing important, except that the sounds and effects are realistic and wildly flexible.</p>
+  <p>We’re in alpha. Stay tuned.</p>
 </section>
 
 <section class="films" id="films"></section>
+
+<div class="theatre" id="theatre" role="dialog" aria-label="Film">
+  <button class="close" id="theatreClose" aria-label="Close">&times;</button>
+  <video controls playsinline id="theatreVideo"></video>
+</div>
 
 <script>
 /* ---------------------------------------------------------------- the instruments
@@ -306,20 +332,20 @@ $('play').addEventListener('click', () => playing ? stop() : start());
 choose('clarinet');
 
 /* ---------------------------------------------------------------- the films */
-const FILMS = [
-  ['Synths', [['piano', 'Piano'], ['breath-and-bow', 'Breath and Bow'], ['the-voice-2', 'The Voice 2'],
+const FILMS = [          // [title, layout, films]
+  ['Synths', 'two-three', [['piano', 'Piano'], ['breath-and-bow', 'Breath and Bow'], ['the-voice-2', 'The Voice 2'],
               ['zkrich', 'ZKRiCH!'], ['flower-pots', 'Flower Pots']]],
-  ['Effects', [['the-can', 'The Can'], ['super-foods', 'Super-Foods'], ['model-500', 'Model 500']]],
-  ['Example Piece', [['ensemble', 'The Ensemble']]],
+  ['Effects', 'three', [['the-can', 'The Can'], ['super-foods', 'Super-Foods'], ['model-500', 'Model 500']]],
+  ['Example Piece', 'one', [['ensemble', 'The Ensemble']]],
 ];
-// two across; an odd one at the end sits in the middle
-$('films').innerHTML = FILMS.map(([title, list]) => `<h2>${title}</h2><div class="grid">` +
-  list.map(([file, name], k) => `<figure id="film-${file}"${k === list.length - 1 && k % 2 === 0 ? ' class="lone"' : ''}>
-    <video controls preload="none" playsinline poster="media/${file}.jpg">
-    <source src="media/${file}.mp4" type="video/mp4"></video><figcaption>${name}</figcaption></figure>`).join('') + '</div>').join('');
+// each film shows its poster; hovering plays a short silent preview; a click opens the film itself
+$('films').innerHTML = FILMS.map(([title, layout, list]) => `<h2>${title}</h2><div class="grid ${layout}">` +
+  list.map(([file, name]) => `<figure id="film-${file}" data-file="${file}" data-name="${name}" tabindex="0" role="button" aria-label="Play ${name}">
+    <video muted loop playsinline preload="none" poster="media/${file}.jpg" src="media/preview/${file}.mp4"></video>
+    <div class="name"><span>${name}</span></div></figure>`).join('') + '</div>').join('');
 
 // the lists in the bar: every instrument, each a link to its film
-$('lists').innerHTML = FILMS.slice(0, 2).map(([title, list]) => `<div><h3>${title}</h3><ul>` +
+$('lists').innerHTML = FILMS.slice(0, 2).map(([title, , list]) => `<div><h3>${title}</h3><ul>` +
   list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('');
 $('lists').addEventListener('click', e => {
   const a = e.target.closest('a'); if (!a) return;
@@ -329,16 +355,45 @@ $('lists').addEventListener('click', e => {
   if (parent !== window) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
   else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
-// one film at a time
-document.addEventListener('play', e => {
-  if (e.target.tagName !== 'VIDEO') return;
-  document.querySelectorAll('video').forEach(v => { if (v !== e.target) v.pause(); });
+document.querySelectorAll('.films figure').forEach(f => {
+  const v = f.querySelector('video');
+  f.addEventListener('mouseenter', () => { v.play().catch(() => {}); });
+  f.addEventListener('mouseleave', () => { v.pause(); });
+  f.addEventListener('click', () => openFilm(f.dataset.file, f.dataset.name));
+  f.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFilm(f.dataset.file, f.dataset.name); } });
+});
+
+// Inside Squarespace the page is a tall frame, so "the browser window" belongs to the host page:
+// when the host's little script has said hello, it opens the film there. Otherwise the page does it.
+let host = false;
+addEventListener('message', e => { if (e.data && e.data.rmiHost) host = true; });
+if (parent !== window) parent.postMessage({ rmiHello: true }, '*');
+
+function openFilm(file, name) {
   if (playing) stop();
-}, true);
+  document.querySelectorAll('.films video').forEach(v => v.pause());
+  const url = new URL(`media/${file}.mp4`, location.href).href;
+  if (host) { parent.postMessage({ rmiFilm: url, name }, '*'); return; }
+  const v = $('theatreVideo');
+  v.src = url; v.setAttribute('aria-label', name);
+  $('theatre').classList.add('open');
+  document.documentElement.style.overflow = 'hidden';
+  v.play().catch(() => {});
+}
+function closeFilm() {
+  const v = $('theatreVideo');
+  if (document.fullscreenElement) document.exitFullscreen();
+  v.pause(); v.removeAttribute('src'); v.load();
+  $('theatre').classList.remove('open');
+  document.documentElement.style.overflow = '';
+}
+$('theatreClose').addEventListener('click', closeFilm);
+addEventListener('keydown', e => { if (e.key === 'Escape' && $('theatre').classList.contains('open') && !document.fullscreenElement) closeFilm(); });
 
 /* ---------------------------------------------------------------- inside Squarespace
    When this page sits in an iframe, tell the host page how tall it is. */
-const tellHeight = () => parent !== window && parent.postMessage({ rmiHeight: document.documentElement.scrollHeight }, '*');
+// (the body's own height: the document's is never less than the frame, so it could only ever grow)
+const tellHeight = () => parent !== window && parent.postMessage({ rmiHeight: Math.ceil(document.body.getBoundingClientRect().height) }, '*');
 addEventListener('load', tellHeight); addEventListener('resize', tellHeight);
 new ResizeObserver(tellHeight).observe(document.body);
 </script>

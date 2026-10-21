@@ -1,0 +1,43 @@
+<!-- Robyn Miller Instruments: paste all of this into one Squarespace Code block.
+     The frame grows to the page's height, the instrument names scroll to their films,
+     and a clicked film fills the whole browser window (its own button goes full screen). -->
+<iframe id="rmi" src="https://tinselman.github.io/instruments/" title="Robyn Miller Instruments"
+        style="width:100%;height:3200px;border:0;display:block" scrolling="no"
+        allow="autoplay; fullscreen" allowfullscreen></iframe>
+<script>
+(function () {
+  var f = document.getElementById('rmi'), origin = new URL(f.src, location.href).origin, box = null;
+  function hello() { f.contentWindow.postMessage({ rmiHost: true }, origin); }
+  f.addEventListener('load', hello);
+  window.addEventListener('message', function (e) {
+    if (e.source !== f.contentWindow || e.origin !== origin || !e.data) return;
+    var d = e.data;
+    if (d.rmiHello) hello();
+    if (d.rmiHeight) f.style.height = d.rmiHeight + 'px';
+    if (d.rmiScrollTo != null) window.scrollTo({ top: f.getBoundingClientRect().top + window.scrollY + d.rmiScrollTo, behavior: 'smooth' });
+    if (d.rmiFilm && d.rmiFilm.indexOf(origin + '/') === 0) openFilm(d.rmiFilm, d.name);
+  });
+  function openFilm(url, name) {
+    box = document.createElement('div');
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', name || 'Film');
+    box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#000';
+    var v = document.createElement('video');
+    v.controls = true; v.playsInline = true; v.src = url;
+    v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain';
+    var x = document.createElement('button');
+    x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
+    x.style.cssText = 'position:absolute;top:14px;right:18px;z-index:1;background:none;border:0;color:#fff;font:300 34px/1 sans-serif;opacity:.7;cursor:pointer;padding:6px 10px';
+    x.onclick = closeFilm;
+    box.appendChild(v); box.appendChild(x); document.body.appendChild(box);
+    document.documentElement.style.overflow = 'hidden';
+    v.play();
+  }
+  function closeFilm() {
+    if (!box) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    box.querySelector('video').pause(); box.remove(); box = null;
+    document.documentElement.style.overflow = '';
+  }
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !document.fullscreenElement) closeFilm(); });
+})();
+</script>
