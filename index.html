@@ -21,9 +21,9 @@
 
   /* ---- the bar */
   .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
-         padding: 0 32px; position: relative; z-index: 2; }
+         padding: 0 clamp(32px, 4.5vw, 80px); position: relative; z-index: 2; }     /* 60px at her 1324px window */
   /* equal columns, so SYNTHS, EFFECTS, THE SOUNDS, ABOUT US and CONTACT stand the same distance apart */
-  .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start;
+  .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 3.9vw, 52px); align-items: start;
            position: relative; z-index: 3; }      /* above the logo's frame, which is wider than the logo and would take their clicks */
   .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink); }
   .lists ul { list-style: none; }
@@ -131,10 +131,12 @@
   /* ---- the small print */
   .legal { text-align: center; font-size: 11px; letter-spacing: .02em; color: var(--soft); padding: 0 16px 28px; }
 
+  /* the five headings in one row: a little above the bar's middle, where she put it */
+  @media (min-width: 1001px) { .lists { top: -11px; } }
   @media (max-width: 1000px) {
     /* no room for five columns beside the logo: THE SOUNDS, ABOUT US and CONTACT make a row under the lists */
     .lists { grid-auto-flow: row; grid-template-columns: repeat(2, max-content); row-gap: 22px; }
-    .lists .links { display: flex; grid-column: 1 / -1; column-gap: clamp(28px, 5vw, 64px);
+    .lists .links { display: flex; grid-column: 1 / -1; column-gap: clamp(28px, 3.9vw, 52px);
                     contain: inline-size; white-space: nowrap; }      /* the row must not widen the columns above it */
   }
   @media (max-width: 640px) {
