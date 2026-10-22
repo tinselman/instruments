@@ -97,6 +97,10 @@
   .words { max-width: 780px; margin: 0 auto; padding: clamp(36px, 4.5vw, 60px) 24px clamp(70px, 9vw, 120px); text-align: center;
            font-size: clamp(21px, 2.55vw, 36px); line-height: 2; }
   .words p + p { margin-top: 1.4em; }
+  /* "Stay tuned!" opens the mailing-list window */
+  .words .tuned { display: inline; padding: 0; font: inherit; letter-spacing: inherit; line-height: inherit; color: inherit;
+                  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; transition: opacity .15s; }
+  .words .tuned:hover { opacity: .55; }
 
   /* ---- the films */
   .films { padding: 0 0 90px; }                     /* the films run edge to edge; only the example piece sits in */
@@ -174,7 +178,7 @@
 
 <section class="words">
   <p>Here at Robyn Miller Instruments, we’ve been hard at work building a collection of synths and effects plugins. And we’re almost complete! As composers, these are the tools we want to use: powerful, easy-to-use, and wildly flexible.</p>
-  <p>We’re in alpha. Stay tuned!</p>
+  <p>We’re in alpha. <button class="tuned" id="tuned" aria-haspopup="dialog">Stay tuned!</button></p>
 </section>
 
 <section class="films" id="films"></section>
@@ -524,22 +528,32 @@ document.addEventListener('click', e => {
   const link = e.target.closest('#sounds, #about');
   if (link) openWindow(link.id);
   else if (e.target.closest('#contact')) openContact();
+  else if (e.target.closest('#tuned')) openNews();
 }, true);
 
-/* CONTACT: the form is the Contact page of robynmiller.net, and only that site can send it, so inside
-   the Squarespace page the host page opens the window (its header code). Seen anywhere else, the
-   Contact page opens in a new tab. */
-let contactHost = null;
+/* CONTACT and "Stay tuned!": the forms are pages of robynmiller.net (Contact, and Stay Tuned with its
+   newsletter sign-up), and only that site can send them, so inside the Squarespace page the host page opens
+   the windows (its header code). Seen anywhere else, the form's page opens in a new tab. */
+let hostOrigin = null, newsHost = false;
 addEventListener('message', e => {
-  if (e.data && e.data.rmiContactHost && /^https:\/\/(www\.)?robynmiller\.net$/.test(e.origin)) contactHost = e.origin;
+  if (!e.data || !/^https:\/\/(www\.)?robynmiller\.net$/.test(e.origin)) return;
+  if (e.data.rmiContactHost) hostOrigin = e.origin;
+  if (e.data.rmiNewsHost) newsHost = true;
 });
+// where a window goes on a phone or a small window: under its link
+const under = (link, centred) => {
+  const r = $(link).getBoundingClientRect(), w = Math.min(440, innerWidth - 32), x = centred ? r.left + r.width / 2 - w / 2 : r.left - 34;
+  return { left: Math.max(16, Math.min(x, innerWidth - w - 16)), top: Math.max(16, r.bottom + 14) };
+};
 function openContact() {
-  if (!contactHost) { window.open('https://www.robynmiller.net/contact', '_blank', 'noopener'); return; }
-  // where the window goes on a phone or a small window: under the link, as About Us does
-  const r = $('contact').getBoundingClientRect(), w = Math.min(440, innerWidth - 32);
-  parent.postMessage({ rmiContact: { left: Math.max(16, Math.min(r.left - 34, innerWidth - w - 16)), top: Math.max(16, r.bottom + 14) } }, contactHost);
+  if (!hostOrigin) { window.open('https://www.robynmiller.net/contact', '_blank', 'noopener'); return; }
+  parent.postMessage({ rmiContact: under('contact') }, hostOrigin);
 }
-addEventListener('keydown', e => { if (e.key === 'Escape' && contactHost) parent.postMessage({ rmiContactClose: true }, contactHost); });
+function openNews() {
+  if (!hostOrigin || !newsHost) { window.open('https://www.robynmiller.net/stay-tuned', '_blank', 'noopener'); return; }
+  parent.postMessage({ rmiNews: under('tuned', true) }, hostOrigin);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && hostOrigin) parent.postMessage({ rmiContactClose: true }, hostOrigin); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && windowOpen()) closeWindows(); });
 addEventListener('blur', () => { if (windowOpen()) closeWindows(); });    // a click on the logo, or outside the page
 addEventListener('resize', () => { if (windowOpen()) closeWindows(); });

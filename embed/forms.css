@@ -1,0 +1,73 @@
+/* The Squarespace forms shown in the instruments page's windows (Contact, Stay tuned), dressed like the page.
+   The Squarespace page's header code loads this into each window's frame, so it styles nothing else on the site;
+   changing it here needs only a push, no new paste. */
+
+:root { color-scheme: light; }
+html, body { background: transparent !important; margin: 0 !important; padding: 0 !important; height: auto !important;
+             min-height: 0 !important; overflow-x: hidden !important; }
+/* the rest of the page; Google's spam check stays, hidden as the site hides it */
+#canvasWrapper, .absolute-cart-box { display: none !important; }
+
+.rmi-form { display: block !important; padding: 0 !important; margin: 0 !important; color: #111 !important;
+            font: 300 15px/1.5 "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif !important; -webkit-font-smoothing: antialiased; }
+.rmi-form * { font-family: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif !important; }
+.rmi-form .sqs-block-content, .rmi-form .field-list, .rmi-form form { margin: 0 !important; padding: 0 !important; }
+.rmi-form .form-item { margin: 0 0 20px !important; padding: 0 !important; border: 0 !important; min-width: 0 !important; }
+
+/* Contact: first and last name side by side */
+.rmi-form fieldset.name { display: grid !important; grid-template-columns: 1fr 1fr; column-gap: 20px; }
+.rmi-form fieldset.name legend { display: none !important; }
+.rmi-form fieldset.name .field { margin: 0 !important; padding: 0 !important; width: auto !important; min-width: 0; }
+
+/* labels: small spaced capitals */
+.rmi-form .title, .rmi-form .caption, .rmi-form .caption-text, .rmi-form .title span {
+  font-size: 11px !important; font-weight: 400 !important; letter-spacing: .22em !important; text-transform: uppercase !important;
+  color: #6b6b6b !important; line-height: 1.4 !important; white-space: nowrap; }
+.rmi-form .title, .rmi-form .caption { display: block !important; margin: 0 0 4px !important; padding: 0 !important; }
+.rmi-form .description.required { display: none !important; }
+
+/* fields: a hairline underneath, red while typing */
+.rmi-form input[type=text], .rmi-form input[type=email], .rmi-form textarea {
+  -webkit-appearance: none; appearance: none; width: 100% !important; box-sizing: border-box !important; background: transparent !important;
+  border: 0 !important; border-bottom: 1px solid #111 !important; border-radius: 0 !important; box-shadow: none !important; outline: none !important;
+  padding: 6px 0 7px !important; margin: 0 !important; font-size: 16px !important; font-weight: 300 !important; letter-spacing: 0 !important;
+  color: #111 !important; text-align: left !important; }
+.rmi-form input[type=text]:focus, .rmi-form input[type=email]:focus, .rmi-form textarea:focus { border-bottom-color: #f82c1c !important; }
+.rmi-form input::placeholder { color: #9b9a96 !important; opacity: 1 !important; }
+.rmi-form textarea { min-height: 90px !important; height: 90px; resize: vertical !important; line-height: 1.6 !important; }
+.rmi-form .form-input-effects { display: none !important; }
+
+/* Contact: the newsletter box */
+.rmi-form .option { margin: 12px 0 0 !important; padding: 0 !important; }
+.rmi-form .option label { display: flex !important; align-items: center !important; gap: 9px; margin: 0 !important; font-size: 13px !important;
+                          letter-spacing: 0 !important; text-transform: none !important; color: #6b6b6b !important; cursor: pointer; }
+.rmi-form .option span { font-size: 13px !important; color: #6b6b6b !important; }
+.rmi-form input[type=checkbox] { accent-color: #111; width: 14px !important; height: 14px !important; margin: 0 !important; flex: none; }
+.rmi-form [role=alert], .rmi-form .field-error { color: #f82c1c !important; font-size: 12px !important; letter-spacing: .02em !important; }
+
+/* Stay tuned: the newsletter block's title and words, then the field, then the button */
+.rmi-form .newsletter-form-header, .rmi-form header { text-align: center !important; margin: 0 0 26px !important; padding: 0 !important; }
+.rmi-form .newsletter-form-header-title, .rmi-form h1, .rmi-form h2, .rmi-form h3 {
+  font-weight: 300 !important; font-size: 28px !important; letter-spacing: -0.01em !important; line-height: 1.2 !important; color: #111 !important;
+  text-transform: none !important; text-align: center !important; margin: 0 0 14px !important; }
+.rmi-form .newsletter-form-header-description, .rmi-form .newsletter-form-header-description p {
+  font-size: 15px !important; line-height: 2 !important; color: #111 !important; text-align: center !important; margin: 0 !important; }
+.rmi-form .newsletter-form-body, .rmi-form .newsletter-form-fields-wrapper, .rmi-form .newsletter-form-field-wrapper {
+  display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; float: none !important; }
+.rmi-form .newsletter-form-field-label { display: none !important; }      /* the field says "Email Address" itself */
+.rmi-form .newsletter-form-footnote { font-size: 12px !important; color: #6b6b6b !important; text-align: center !important; margin: 14px 0 0 !important; }
+
+/* the button: a hairline box, filled when pointed at */
+.rmi-form .form-button-wrapper, .rmi-form .newsletter-form-button-wrapper, .rmi-form .submit-wrapper {
+  display: block !important; text-align: center !important; margin: 26px 0 0 !important; padding: 0 !important; float: none !important; width: auto !important; }
+.rmi-form button[type=submit], .rmi-form .form-submit-button, .rmi-form .newsletter-form-button {
+  display: inline-block !important; width: auto !important; height: auto !important; min-height: 0 !important;
+  background: transparent !important; color: #111 !important; border: 1px solid #111 !important; border-radius: 0 !important; box-shadow: none !important;
+  padding: 13px 34px 12px !important; font-size: 12px !important; font-weight: 400 !important; line-height: 1.4 !important; letter-spacing: .24em !important;
+  text-transform: uppercase !important; cursor: pointer; transition: background .15s, color .15s; }
+.rmi-form button[type=submit]:hover, .rmi-form .form-submit-button:hover, .rmi-form .newsletter-form-button:hover { background: #111 !important; color: #f0f0ee !important; }
+.rmi-form button[type=submit] *, .rmi-form .newsletter-form-button * { color: inherit !important; font-size: inherit !important; letter-spacing: inherit !important; }
+
+/* after sending */
+.rmi-form .form-submission-text, .rmi-form .form-submission-html { font-size: 16px !important; line-height: 2 !important; text-align: center !important; color: #111 !important; }
+.rmi-form .hidden { display: none !important; }
