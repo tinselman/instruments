@@ -15,6 +15,9 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
+  /* at the top or bottom, a swipe stays with this page: passed on to the Squarespace page around it, it stuck
+     there, and the way back up took several tries (her iPhone) */
+  html, body { overscroll-behavior-y: contain; }
   body { background: var(--page); color: var(--ink); font-family: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
          font-weight: 300; -webkit-font-smoothing: antialiased; }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }

@@ -1,6 +1,9 @@
 <style>
   /* Robyn Miller Instruments page only: no sidebar or menu; the page fills the window and scrolls itself */
   html, body { background: #000 !important; }
+  /* the Squarespace page itself never scrolls: on a phone every swipe belongs to the instruments page in front */
+  html, body { overflow: hidden !important; height: 100% !important; overscroll-behavior: none !important; }
+  body { position: fixed !important; top: 0; right: 0; bottom: 0; left: 0; }
   #headerWrapper, #mobileNav, #topNavMobile, #mobileMenuLink { display: none !important; }
   #page .sqs-block-code { transform: none !important; }
   #page .sqs-code-container { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5; background: #f0f0ee; }
@@ -9,13 +12,13 @@
   /* the Contact and Stay tuned windows: the About Us window's look, with the site's own forms inside */
   .rmi-veil { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 60; display: none; }
   .rmi-veil.open { display: block; }
+  /* closed, a window is gone altogether (display: none), so nothing invisible sits over the page to catch a swipe */
   .rmi-window { position: fixed; z-index: 61; left: 16px; top: 160px; width: min(440px, calc(100vw - 32px)); padding: 30px 34px 32px;
-                box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;
+                box-sizing: border-box; display: none; flex-direction: column; justify-content: center;
                 background: rgba(250, 250, 248, .84); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
                 border-radius: 18px; box-shadow: 0 0 70px rgba(0, 0, 0, .24);
-                opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
-                transition: opacity .2s, transform .2s, visibility 0s .2s; }
-  .rmi-window.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity .2s, transform .2s, visibility 0s; }
+                opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .2s, transform .2s; }
+  .rmi-window.open { opacity: 1; transform: none; pointer-events: auto; }
   .rmi-window iframe { display: block; width: 100%; height: 300px; border: 0; background: transparent; color-scheme: light; }
   @media (min-width: 1100px) and (min-height: 600px) {
     .rmi-window { --side: min(max(33.333vw, 460px), calc(100vh - 48px));
@@ -52,7 +55,7 @@
     w.box.setAttribute('role', 'dialog'); w.box.setAttribute('aria-label', w.label);
     w.frame = document.createElement('iframe'); w.frame.title = w.label;
     w.box.appendChild(w.frame); document.body.appendChild(w.box);
-    w.form = null; w.wanted = false; w.where = { left: 16, top: 160 }; w.top = 160;
+    w.form = null; w.wanted = false; w.where = { left: 16, top: 160 }; w.top = 160; w.hiding = 0;
     w.frame.addEventListener('load', function () { dress(w); });
   }
   function load(w) { if (!w.frame.getAttribute('src')) w.frame.src = w.url; }
@@ -68,7 +71,7 @@
       style.onload = style.onerror = function () {
         block.classList.add('rmi-form'); d.body.appendChild(block);
         w.form = block;
-        new w.frame.contentWindow.ResizeObserver(function () { fit(w); }).observe(block);
+        new w.frame.contentWindow.ResizeObserver(function () { if (showing === w) place(w); else fit(w); }).observe(block);
         fit(w);
         if (w.wanted) { w.wanted = false; show(w); }
       };
@@ -91,8 +94,15 @@
     fit(w);
   }
   function show(w) {
-    if (showing && showing !== w) showing.box.classList.remove('open');
-    place(w); veil.classList.add('open'); w.box.classList.add('open'); showing = w;
+    if (showing && showing !== w) hide(showing);
+    clearTimeout(w.hiding);
+    w.box.style.display = 'flex'; w.box.getBoundingClientRect();           // laid out first (so it fades in), then placed
+    place(w); veil.classList.add('open'); showing = w;
+    w.box.classList.add('open');
+  }
+  function hide(w) {
+    w.box.classList.remove('open');
+    w.hiding = setTimeout(function () { if (!w.box.classList.contains('open')) w.box.style.display = 'none'; }, 220);
   }
   function open(name, at) {
     var w = WINDOWS[name];
@@ -102,7 +112,7 @@
   }
   function close() {
     veil.classList.remove('open');
-    for (var name in WINDOWS) WINDOWS[name].box.classList.remove('open');
+    for (var name in WINDOWS) if (WINDOWS[name].box.style.display === 'flex') hide(WINDOWS[name]);
     showing = null;
   }
 
