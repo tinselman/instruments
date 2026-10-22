@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robyn Miller Instruments</title>
 <style>
-  :root { --ink: #f2efea; --paper: transparent; }   /* the inverted logo: cream lines, on the black bar */
-  :root[data-ink="paper"] { --ink: #1a1a1a; --paper: transparent; }
-  /* the page header copy: no paper, no tools, sized to its little frame */
+  :root { --ink: #1a1a1a; --paper: transparent; }   /* the logo's own dark lines, on the light bar */
+  :root[data-ink="cream"] { --ink: #f2efea; }        /* the inverted logo, for a dark bar */
+    /* the page header copy: no paper, no tools, sized to its little frame */
   .tools { display: none !important; }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; background: var(--paper); color: var(--ink); overflow: hidden; }
@@ -530,7 +530,7 @@
   ink = readInk();
   document.getElementById('swap').onclick = () => {
     const root = document.documentElement;
-    root.dataset.ink = root.dataset.ink === 'paper' ? '' : 'paper';
+    root.dataset.ink = root.dataset.ink === 'cream' ? '' : 'cream';
     ink = readInk(); paint(performance.now());
   };
   document.getElementById('save').onclick = () => {

@@ -11,7 +11,7 @@
 <style>
   :root {
     --ink: #111; --soft: #6b6b6b; --hair: #c9c9c6;
-    --page: #f0f0ee; --bar: #000; --screen: #000;
+    --page: #f0f0ee; --bar: var(--page); --screen: #000;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -22,20 +22,40 @@
   /* ---- the bar */
   .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
          padding: 0 32px; position: relative; z-index: 2; }
-  .lists { display: flex; gap: clamp(28px, 5vw, 64px); }
-  .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: #f2efea; }
+  /* equal columns, so SYNTHS, EFFECTS and ABOUT US stand the same distance apart */
+  .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start; }
+  .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink); }
   .lists ul { list-style: none; }
   .lists li { font-size: 14px; line-height: 1.55; }
-  .lists a { color: #9b9a96; text-decoration: none; transition: color .15s; }
-  .lists a:hover { color: #fff; }
+  .lists a { color: var(--soft); text-decoration: none; transition: color .15s; }
+  .lists a:hover { color: var(--ink); }
+  .lists .about { display: block; font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase;
+                  color: var(--ink); white-space: nowrap; transition: opacity .15s; }
+  .lists .about:hover { opacity: .55; }
+
+  /* About Us: a small frosted window under its link; any click closes it */
+  .aboutbox { position: absolute; z-index: 20; width: min(440px, calc(100vw - 32px)); padding: 30px 34px 32px;
+              background: rgba(250, 250, 248, .84); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
+              border-radius: 18px; box-shadow: 0 0 70px rgba(0, 0, 0, .24);      /* centred: a plain gaussian blur all round */
+              font-size: 15px; line-height: 2; text-align: justify; hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 7 3 3; color: var(--ink);
+              opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .2s, transform .2s; cursor: default; }
+  .aboutbox.open { opacity: 1; transform: none; pointer-events: auto; }
+  /* a large screen: a square a third of the window, in the middle of it, the words an inch in from every edge
+     (never smaller than 460px, so on a smaller laptop the words stay readable) */
+  @media (min-width: 1100px) and (min-height: 600px) {
+    .aboutbox { --side: min(max(33.333vw, 460px), calc(100vh - 48px));
+                position: fixed; left: 50%; top: 50%; width: var(--side); height: var(--side); padding: 1in;
+                display: flex; align-items: center; transform: translate(-50%, -48%); }
+    .aboutbox.open { transform: translate(-50%, -50%); }
+  }
   /* the badge's frame is wider than the badge (room for its shapes to orbit); it stands past the
      right edge, so a window trims that part off rather than letting the page scroll sideways */
-  .badgebox { position: absolute; right: 0; top: -45px; width: 330px; height: 340px; overflow: hidden; pointer-events: none; }
-  .bar .badge { position: absolute; left: 0; top: 0; width: 400px; height: 340px; border: 0; pointer-events: auto;
+  .badgebox { position: absolute; right: 0; top: -71px; width: 373px; height: 391px; overflow: hidden; pointer-events: none; }
+  .bar .badge { position: absolute; left: 0; top: 0; width: 460px; height: 391px; border: 0; pointer-events: auto;
                 background: transparent; }
 
   /* ---- the headline */
-  h1 { font-weight: 300; font-size: clamp(42px, 7.2vw, 104px); line-height: 1.02; letter-spacing: -0.02em;
+  h1 { font-weight: 300; font-size: clamp(31.5px, 5.4vw, 78px); line-height: 1.02; letter-spacing: -0.02em;
        text-align: center; padding: clamp(56px, 9vw, 120px) 24px clamp(40px, 6vw, 80px); text-wrap: balance; }
 
   /* ---- the instruments */
@@ -110,11 +130,16 @@
     .bar { height: 150px; padding: 0 16px; }
     .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
     .films .grid.pair figure { grid-column: 1 / -1; }
-    .lists { gap: 22px; }
-    .lists h3 { font-size: 10px; margin-bottom: 6px; }
+    /* no room for a third column beside the logo: ABOUT US stands at the foot of the effects */
+    .lists { grid-auto-flow: row; grid-template-columns: repeat(2, max-content); column-gap: 22px; }
+    .lists > div:nth-child(2) { grid-column: 2; grid-row: 1; }
+    .lists > div:nth-child(3) { grid-column: 2; grid-row: 1; align-self: end; }
+    .lists h3, .lists .about { font-size: 10px; }
+    .lists h3 { margin-bottom: 6px; }
     .lists li { font-size: 12.5px; line-height: 1.5; }
-    .badgebox { width: 190px; height: 180px; top: -15px; right: 0; }
-    .bar .badge { width: 190px; height: 180px; }
+    /* the frame runs past the right edge, so the logo sits further right than its middle */
+    .badgebox { width: 218px; height: 207px; top: -28px; right: 0; }
+    .bar .badge { width: 268px; height: 207px; }
   }
 </style>
 </head>
@@ -122,10 +147,11 @@
 
 <header class="bar">
   <nav class="lists" id="lists" aria-label="The instruments"></nav>
+  <div class="aboutbox" id="aboutbox" role="dialog" aria-label="About Us"><p>RM Instruments was founded by Robyn Miller, the co-founder of Cyan Worlds and co-creator and composer of Myst and Riven. After years of scoring games and films, he found himself searching for production tools that didn’t exist. That search became the foundation of RM Instruments. Our philosophy: music software shouldn’t feel like homework. It should speak the language of the musician.</p></div>
   <div class="badgebox"><iframe class="badge" src="assets/logo-header.html" title="Robyn Miller Instruments" scrolling="no" allowtransparency="true"></iframe></div>
 </header>
 
-<h1>Rocking Out and Plugging In</h1>
+<h1>Rock Out and Plugin</h1>
 
 <section class="demo" aria-label="Three instruments to play with">
   <nav class="switch" id="switch">
@@ -441,15 +467,49 @@ $('films').innerHTML = FILMS.map(([title, layout, list]) => `<h2>${title}</h2><d
 
 // the lists in the bar: every instrument, each a link to its film
 $('lists').innerHTML = FILMS.slice(0, 2).map(([title, , list]) => `<div><h3>${title}</h3><ul>` +
-  list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('');
+  list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('') +
+  '<div><button class="about" id="about" aria-haspopup="dialog" aria-expanded="false">About Us</button></div>';
 $('lists').addEventListener('click', e => {
-  const a = e.target.closest('a'); if (!a) return;
+  const a = e.target.closest('a[href]'); if (!a) return;
   e.preventDefault();
   const el = document.querySelector(a.getAttribute('href'));
   // inside Squarespace the host page does the scrolling
   if (host) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
   else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+// About Us opens its window under the link; a click anywhere, on it or off it, closes it
+const aboutBox = $('aboutbox'), aboutLink = $('about');
+const bigScreen = matchMedia('(min-width: 1100px) and (min-height: 600px)');
+// in the square, the words are set as large as fits inside the inch of margin (13 to 22px)
+function fitAbout() {
+  const p = aboutBox.querySelector('p');
+  if (!bigScreen.matches) { p.style.fontSize = ''; return; }
+  const room = aboutBox.clientHeight - parseFloat(getComputedStyle(aboutBox).paddingTop) * 2;
+  let lo = 11, hi = 22;
+  for (let k = 0; k < 10; k++) { const f = (lo + hi) / 2; p.style.fontSize = f + 'px'; if (p.offsetHeight <= room) lo = f; else hi = f; }
+  p.style.fontSize = lo + 'px';
+}
+function openAbout() {
+  if (bigScreen.matches) { aboutBox.style.left = aboutBox.style.top = ''; }
+  else {                                            // a phone or a small window: under its link
+    const bar = document.querySelector('.bar').getBoundingClientRect(), r = aboutLink.getBoundingClientRect();
+    const w = aboutBox.offsetWidth, x = Math.max(16, Math.min(r.left - bar.left - 34, bar.width - w - 16));
+    aboutBox.style.left = x + 'px'; aboutBox.style.top = (r.bottom - bar.top + 14) + 'px';
+  }
+  fitAbout();
+  aboutBox.classList.add('open'); aboutLink.setAttribute('aria-expanded', 'true');
+}
+function closeAbout() { aboutBox.classList.remove('open'); aboutLink.setAttribute('aria-expanded', 'false'); }
+const aboutOpen = () => aboutBox.classList.contains('open');
+// while it is open, the click that closes it does nothing else (no film opens by accident)
+document.addEventListener('click', e => {
+  if (aboutOpen()) { e.preventDefault(); e.stopPropagation(); closeAbout(); }
+  else if (e.target.closest('#about')) openAbout();
+}, true);
+addEventListener('keydown', e => { if (e.key === 'Escape' && aboutOpen()) closeAbout(); });
+addEventListener('blur', () => { if (aboutOpen()) closeAbout(); });       // a click on the logo, or outside the page
+addEventListener('resize', () => { if (aboutOpen()) closeAbout(); });
+
 document.querySelectorAll('.films figure').forEach(f => {
   const v = f.querySelector('video');
   f.addEventListener('mouseenter', () => { v.play().catch(() => {}); });
