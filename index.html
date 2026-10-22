@@ -86,6 +86,7 @@
   .films .grid.two-three figure:nth-child(-n+2) { grid-column: span 3; }        /* two, then three */
   .films .grid.one { grid-template-columns: 1fr; width: min(576px, calc(100% - 48px)); margin: 0 auto; }
   .films .grid.one figure { grid-column: auto; }
+  .films .grid.pair figure { grid-column: span 3; }                         /* two across, edge to edge */
   .films figure { position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden; cursor: pointer; }
   .films figure video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   .films .name { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
@@ -108,6 +109,7 @@
     .legal { font-size: 10px; letter-spacing: 0; text-wrap: balance; }   /* one line won't fit a phone readably: two even lines */
     .bar { height: 150px; padding: 0 16px; }
     .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
+    .films .grid.pair figure { grid-column: 1 / -1; }
     .lists { gap: 22px; }
     .lists h3 { font-size: 10px; margin-bottom: 6px; }
     .lists li { font-size: 12.5px; line-height: 1.5; }
@@ -138,7 +140,7 @@
 </section>
 
 <section class="words">
-  <p>Here at RMI, we are currently creating and testing a collection of synths and effects plugins. As composers, these are the tools we want to use: powerful, easy-to-use, and wildly flexible.</p>
+  <p>Here at Robyn Miller Instruments, we’ve been hard at work building a collection of synths and effects plugins. And we’re almost complete! As composers, these are the tools we want to use: powerful, easy-to-use, and wildly flexible.</p>
   <p>We’re in alpha. Stay tuned!</p>
 </section>
 
@@ -429,7 +431,7 @@ const FILMS = [          // [title, layout, films]
   ['Synths', 'two-three', [['piano', 'Piano'], ['breath-and-bow', 'Breath and Bow'], ['the-voice-2', 'The Voice 2'],
               ['zkrich', 'ZKRiCH!'], ['flower-pots', 'Flower Pots']]],
   ['Effects', 'three', [['the-can', 'The Can'], ['super-foods', 'Super-Foods'], ['model-500', 'Model 500']]],
-  ['Example Piece', 'one', [['ensemble', 'The Ensemble']]],
+  ['Example Pieces', 'pair', [['ensemble', 'The Ensemble'], ['polka', 'The Polka']]],
 ];
 // each film shows its poster; hovering plays a short silent preview; a click opens the film itself
 $('films').innerHTML = FILMS.map(([title, layout, list]) => `<h2>${title}</h2><div class="grid ${layout}">` +
