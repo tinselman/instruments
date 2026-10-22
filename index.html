@@ -22,7 +22,7 @@
   /* ---- the bar */
   .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
          padding: 0 32px; position: relative; z-index: 2; }
-  /* equal columns, so SYNTHS, EFFECTS, ABOUT US and CONTACT stand the same distance apart */
+  /* equal columns, so SYNTHS, EFFECTS, THE SOUNDS, ABOUT US and CONTACT stand the same distance apart */
   .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start;
            position: relative; z-index: 3; }      /* above the logo's frame, which is wider than the logo and would take their clicks */
   .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink); }
@@ -33,9 +33,9 @@
   .lists .about { display: block; font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase;
                   color: var(--ink); white-space: nowrap; text-align: left; transition: opacity .15s; }
   .lists .about:hover { opacity: .55; }
-  .lists .links { display: contents; }               /* ABOUT US and CONTACT: a column each */
+  .lists .links { display: contents; }               /* THE SOUNDS, ABOUT US and CONTACT: a column each */
 
-  /* About Us: a small frosted window under its link; any click closes it */
+  /* About Us and The Sounds: a small frosted window under its link; any click closes it */
   .aboutbox { position: absolute; z-index: 20; width: min(440px, calc(100vw - 32px)); padding: 30px 34px 32px;
               background: rgba(250, 250, 248, .84); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
               border-radius: 18px; box-shadow: 0 0 70px rgba(0, 0, 0, .24);      /* centred: a plain gaussian blur all round */
@@ -127,16 +127,19 @@
   /* ---- the small print */
   .legal { text-align: center; font-size: 11px; letter-spacing: .02em; color: var(--soft); padding: 0 16px 28px; }
 
-  @media (max-width: 860px) {
-    /* no room for four columns beside the logo: ABOUT US and CONTACT make a row under SYNTHS and EFFECTS */
+  @media (max-width: 1000px) {
+    /* no room for five columns beside the logo: THE SOUNDS, ABOUT US and CONTACT make a row under the lists */
     .lists { grid-auto-flow: row; grid-template-columns: repeat(2, max-content); row-gap: 22px; }
+    .lists .links { display: flex; grid-column: 1 / -1; column-gap: clamp(28px, 5vw, 64px);
+                    contain: inline-size; white-space: nowrap; }      /* the row must not widen the columns above it */
   }
   @media (max-width: 640px) {
     .legal { font-size: 10px; letter-spacing: 0; text-wrap: balance; }   /* one line won't fit a phone readably: two even lines */
     .bar { height: 176px; padding: 0 16px; }
     .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
     .films .grid.pair figure { grid-column: 1 / -1; }
-    .lists { column-gap: 22px; row-gap: 16px; }
+    .lists, .lists .links { column-gap: 22px; }
+    .lists { row-gap: 16px; }
     .lists h3, .lists .about { font-size: 10px; }
     .lists h3 { margin-bottom: 6px; }
     .lists li { font-size: 12.5px; line-height: 1.5; }
@@ -150,6 +153,7 @@
 
 <header class="bar">
   <nav class="lists" id="lists" aria-label="The instruments"></nav>
+  <div class="aboutbox" id="soundsbox" role="dialog" aria-label="The Sounds"><p>The sounds used in our synthesizers and effects are created via physical modeling, a type of synthesis that accurately simulates physical bodies, such as strings, reeds or tubes. These are not AI sounds, though Claude assisted in building the tool.</p></div>
   <div class="aboutbox" id="aboutbox" role="dialog" aria-label="About Us"><p>RM Instruments was founded by Robyn Miller, the co-founder of Cyan Worlds and co-creator and composer of Myst and Riven. After years of scoring games and films, he found himself searching for production tools that didn’t exist. That search became the foundation of RM Instruments. Our philosophy: music software shouldn’t feel like homework. It should speak the language of the musician.</p></div>
   <div class="badgebox"><iframe class="badge" src="assets/logo-header.html" title="Robyn Miller Instruments" scrolling="no" allowtransparency="true"></iframe></div>
 </header>
@@ -471,7 +475,8 @@ $('films').innerHTML = FILMS.map(([title, layout, list]) => `<h2>${title}</h2><d
 // the lists in the bar: every instrument, each a link to its film
 $('lists').innerHTML = FILMS.slice(0, 2).map(([title, , list]) => `<div><h3>${title}</h3><ul>` +
   list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('') +
-  '<div class="links"><button class="about" id="about" aria-haspopup="dialog" aria-expanded="false">About Us</button>' +
+  '<div class="links"><button class="about" id="sounds" aria-haspopup="dialog" aria-expanded="false">The Sounds</button>' +
+  '<button class="about" id="about" aria-haspopup="dialog" aria-expanded="false">About Us</button>' +
   '<button class="about" id="contact" aria-haspopup="dialog">Contact</button></div>';
 $('lists').addEventListener('click', e => {
   const a = e.target.closest('a[href]'); if (!a) return;
@@ -481,34 +486,43 @@ $('lists').addEventListener('click', e => {
   if (host) parent.postMessage({ rmiScrollTo: el.getBoundingClientRect().top + scrollY - 24 }, '*');
   else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
-// About Us opens its window under the link; a click anywhere, on it or off it, closes it
-const aboutBox = $('aboutbox'), aboutLink = $('about');
+// The Sounds and About Us open their windows under the link; a click anywhere, on one or off it, closes it
+const WINDOWS = { sounds: $('soundsbox'), about: $('aboutbox') };     // the link's id: its window
 const bigScreen = matchMedia('(min-width: 1100px) and (min-height: 600px)');
-// in the square, the words are set as large as fits inside the inch of margin (13 to 22px)
-function fitAbout() {
-  const p = aboutBox.querySelector('p');
-  if (!bigScreen.matches) { p.style.fontSize = ''; return; }
-  const room = aboutBox.clientHeight - parseFloat(getComputedStyle(aboutBox).paddingTop) * 2;
-  let lo = 11, hi = 22;
-  for (let k = 0; k < 10; k++) { const f = (lo + hi) / 2; p.style.fontSize = f + 'px'; if (p.offsetHeight <= room) lo = f; else hi = f; }
-  p.style.fontSize = lo + 'px';
-}
-function openAbout() {
-  if (bigScreen.matches) { aboutBox.style.left = aboutBox.style.top = ''; }
-  else {                                            // a phone or a small window: under its link
-    const bar = document.querySelector('.bar').getBoundingClientRect(), r = aboutLink.getBoundingClientRect();
-    const w = aboutBox.offsetWidth, x = Math.max(16, Math.min(r.left - bar.left - 34, bar.width - w - 16));
-    aboutBox.style.left = x + 'px'; aboutBox.style.top = (r.bottom - bar.top + 14) + 'px';
+// in the square, the words are set as large as fits inside the inch of margin (11 to 22px): one size for
+// every window, the size the longest words fit at, so the windows match
+function fitWindows() {
+  const boxes = Object.values(WINDOWS);
+  if (!bigScreen.matches) { boxes.forEach(b => { b.querySelector('p').style.fontSize = ''; }); return; }
+  let size = 22;
+  for (const box of boxes) {
+    const p = box.querySelector('p'), room = box.clientHeight - parseFloat(getComputedStyle(box).paddingTop) * 2;
+    let lo = 11, hi = 22;
+    for (let k = 0; k < 10; k++) { const f = (lo + hi) / 2; p.style.fontSize = f + 'px'; if (p.offsetHeight <= room) lo = f; else hi = f; }
+    size = Math.min(size, lo);
   }
-  fitAbout();
-  aboutBox.classList.add('open'); aboutLink.setAttribute('aria-expanded', 'true');
+  boxes.forEach(b => { b.querySelector('p').style.fontSize = size + 'px'; });
 }
-function closeAbout() { aboutBox.classList.remove('open'); aboutLink.setAttribute('aria-expanded', 'false'); }
-const aboutOpen = () => aboutBox.classList.contains('open');
-// while it is open, the click that closes it does nothing else (no film opens by accident)
+function openWindow(name) {
+  const box = WINDOWS[name], link = $(name);
+  if (bigScreen.matches) { box.style.left = box.style.top = ''; }
+  else {                                            // a phone or a small window: under its link
+    const bar = document.querySelector('.bar').getBoundingClientRect(), r = link.getBoundingClientRect();
+    const w = box.offsetWidth, x = Math.max(16, Math.min(r.left - bar.left - 34, bar.width - w - 16));
+    box.style.left = x + 'px'; box.style.top = (r.bottom - bar.top + 14) + 'px';
+  }
+  fitWindows();
+  box.classList.add('open'); link.setAttribute('aria-expanded', 'true');
+}
+function closeWindows() {
+  for (const name in WINDOWS) { WINDOWS[name].classList.remove('open'); $(name).setAttribute('aria-expanded', 'false'); }
+}
+const windowOpen = () => Object.values(WINDOWS).some(b => b.classList.contains('open'));
+// while one is open, the click that closes it does nothing else (no film opens by accident)
 document.addEventListener('click', e => {
-  if (aboutOpen()) { e.preventDefault(); e.stopPropagation(); closeAbout(); }
-  else if (e.target.closest('#about')) openAbout();
+  if (windowOpen()) { e.preventDefault(); e.stopPropagation(); closeWindows(); return; }
+  const link = e.target.closest('#sounds, #about');
+  if (link) openWindow(link.id);
   else if (e.target.closest('#contact')) openContact();
 }, true);
 
@@ -526,9 +540,9 @@ function openContact() {
   parent.postMessage({ rmiContact: { left: Math.max(16, Math.min(r.left - 34, innerWidth - w - 16)), top: Math.max(16, r.bottom + 14) } }, contactHost);
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && contactHost) parent.postMessage({ rmiContactClose: true }, contactHost); });
-addEventListener('keydown', e => { if (e.key === 'Escape' && aboutOpen()) closeAbout(); });
-addEventListener('blur', () => { if (aboutOpen()) closeAbout(); });       // a click on the logo, or outside the page
-addEventListener('resize', () => { if (aboutOpen()) closeAbout(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && windowOpen()) closeWindows(); });
+addEventListener('blur', () => { if (windowOpen()) closeWindows(); });    // a click on the logo, or outside the page
+addEventListener('resize', () => { if (windowOpen()) closeWindows(); });
 
 document.querySelectorAll('.films figure').forEach(f => {
   const v = f.querySelector('video');
