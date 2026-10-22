@@ -23,7 +23,8 @@
   .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
          padding: 0 32px; position: relative; z-index: 2; }
   /* equal columns, so SYNTHS, EFFECTS, ABOUT US and CONTACT stand the same distance apart */
-  .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start; }
+  .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start;
+           position: relative; z-index: 3; }      /* above the logo's frame, which is wider than the logo and would take their clicks */
   .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink); }
   .lists ul { list-style: none; }
   .lists li { font-size: 14px; line-height: 1.55; }
