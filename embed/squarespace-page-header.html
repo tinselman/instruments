@@ -5,4 +5,126 @@
   #page .sqs-block-code { transform: none !important; }
   #page .sqs-code-container { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5; background: #f0f0ee; }
   .rmi-frame { display: block; width: 100%; height: 100%; border: 0; }
+
+  /* the Contact window: the About Us window's look, with the site's own contact form inside */
+  .rmi-veil { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 60; display: none; }
+  .rmi-veil.open { display: block; }
+  .rmi-contact { position: fixed; z-index: 61; left: 16px; top: 160px; width: min(440px, calc(100vw - 32px)); padding: 30px 34px 32px;
+                 box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;
+                 background: rgba(250, 250, 248, .84); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
+                 border-radius: 18px; box-shadow: 0 0 70px rgba(0, 0, 0, .24);
+                 opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .2s, transform .2s; }
+  .rmi-contact.open { opacity: 1; transform: none; pointer-events: auto; }
+  .rmi-contact iframe { display: block; width: 100%; height: 300px; border: 0; background: transparent; color-scheme: light; }
+  @media (min-width: 1100px) and (min-height: 600px) {
+    .rmi-contact { --side: min(max(33.333vw, 460px), calc(100vh - 48px));
+                   left: 50%; top: 50%; width: var(--side); min-height: var(--side); padding: 1in; transform: translate(-50%, -48%); }
+    .rmi-contact.open { transform: translate(-50%, -50%); }
+  }
 </style>
+<script>
+/* CONTACT on the instruments page asks this page to open the window. The form is this site's own
+   Contact page, loaded here and stripped to its form: being on this site, it can send. */
+(function () {
+  var PAGE = 'https://tinselman.github.io', FORM = '/contact';
+  var FONT = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400&display=swap';
+  var FONTS = '"Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  var CSS = [
+    ':root { color-scheme: light; }',
+    'html, body { background: transparent !important; margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow-x: hidden !important; }',
+    '#canvasWrapper, .absolute-cart-box { display: none !important; }',          /* the rest of the page; Google's spam check stays, hidden as the site hides it */
+    '.rmi-form { display: block !important; padding: 0 !important; margin: 0 !important; color: #111 !important; font: 300 15px/1.5 ' + FONTS + ' !important; -webkit-font-smoothing: antialiased; }',
+    '.rmi-form * { font-family: ' + FONTS + ' !important; }',
+    '.rmi-form .field-list { margin: 0 !important; padding: 0 !important; }',
+    '.rmi-form .form-item { margin: 0 0 20px !important; padding: 0 !important; border: 0 !important; min-width: 0 !important; }',
+    '.rmi-form fieldset.name { display: grid !important; grid-template-columns: 1fr 1fr; column-gap: 20px; }',
+    '.rmi-form fieldset.name legend { display: none !important; }',
+    '.rmi-form fieldset.name .field { margin: 0 !important; padding: 0 !important; width: auto !important; min-width: 0; }',
+    '.rmi-form .title, .rmi-form .caption, .rmi-form .caption-text, .rmi-form .title span { font-size: 11px !important; font-weight: 400 !important; letter-spacing: .22em !important; text-transform: uppercase !important; color: #6b6b6b !important; line-height: 1.4 !important; white-space: nowrap; }',
+    '.rmi-form .title, .rmi-form .caption { display: block !important; margin: 0 0 4px !important; padding: 0 !important; }',
+    '.rmi-form .description.required { display: none !important; }',
+    '.rmi-form input[type=text], .rmi-form input[type=email], .rmi-form textarea { -webkit-appearance: none; appearance: none; width: 100% !important; box-sizing: border-box !important; background: transparent !important; border: 0 !important; border-bottom: 1px solid #111 !important; border-radius: 0 !important; box-shadow: none !important; outline: none !important; padding: 6px 0 7px !important; margin: 0 !important; font-size: 16px !important; font-weight: 300 !important; letter-spacing: 0 !important; color: #111 !important; }',
+    '.rmi-form input[type=text]:focus, .rmi-form input[type=email]:focus, .rmi-form textarea:focus { border-bottom-color: #f82c1c !important; }',
+    '.rmi-form textarea { min-height: 90px !important; height: 90px; resize: vertical !important; line-height: 1.6 !important; }',
+    '.rmi-form .form-input-effects { display: none !important; }',
+    '.rmi-form .option { margin: 12px 0 0 !important; padding: 0 !important; }',
+    '.rmi-form .option label { display: flex !important; align-items: center !important; gap: 9px; margin: 0 !important; font-size: 13px !important; letter-spacing: 0 !important; text-transform: none !important; color: #6b6b6b !important; cursor: pointer; }',
+    '.rmi-form .option span { font-size: 13px !important; color: #6b6b6b !important; }',
+    '.rmi-form input[type=checkbox] { accent-color: #111; width: 14px !important; height: 14px !important; margin: 0 !important; flex: none; }',
+    '.rmi-form [role=alert], .rmi-form .field-error { color: #f82c1c !important; font-size: 12px !important; letter-spacing: .02em !important; }',
+    '.rmi-form .form-button-wrapper { text-align: center !important; margin: 26px 0 0 !important; padding: 0 !important; }',
+    '.rmi-form .form-submit-button { background: transparent !important; color: #111 !important; border: 1px solid #111 !important; border-radius: 0 !important; box-shadow: none !important; padding: 13px 34px 12px !important; font-size: 12px !important; font-weight: 400 !important; letter-spacing: .24em !important; text-transform: uppercase !important; cursor: pointer; transition: background .15s, color .15s; }',
+    '.rmi-form .form-submit-button:hover { background: #111 !important; color: #f0f0ee !important; }',
+    '.rmi-form .form-submit-button * { color: inherit !important; font-size: inherit !important; letter-spacing: inherit !important; }',
+    '.rmi-form .form-submission-text, .rmi-form .form-submission-html { font-size: 16px !important; line-height: 2 !important; text-align: center !important; color: #111 !important; }'
+  ].join('\n');
+
+  var big = window.matchMedia('(min-width: 1100px) and (min-height: 600px)');
+  var veil, box, frame, form = null, wanted = null, where = { left: 16, top: 160 }, top = 160;
+
+  function build() {
+    veil = document.createElement('div'); veil.className = 'rmi-veil';
+    box = document.createElement('div'); box.className = 'rmi-contact';
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Contact');
+    frame = document.createElement('iframe'); frame.title = 'Contact';
+    box.appendChild(frame);
+    document.body.appendChild(veil); document.body.appendChild(box);
+    veil.addEventListener('click', close);                      // a click off the window closes it
+    frame.addEventListener('load', dress);
+    window.addEventListener('resize', function () { if (box.classList.contains('open')) place(); });
+    // tell the instruments page this page can show its Contact window
+    var page = document.querySelector('.rmi-frame');
+    if (page) page.addEventListener('load', function () { page.contentWindow.postMessage({ rmiContactHost: true }, PAGE); });
+  }
+  function load() { if (!frame.getAttribute('src')) frame.src = FORM; }
+
+  // the Contact page, down to its form, dressed like the instruments page
+  function dress() {
+    var d = frame.contentDocument, tries = 0;
+    (function wait() {
+      var block = d && d.querySelector('.sqs-block-form');
+      if (!block || !block.querySelector('form')) { if (++tries < 100) setTimeout(wait, 100); return; }
+      var link = d.createElement('link'); link.rel = 'stylesheet'; link.href = FONT; d.head.appendChild(link);
+      var style = d.createElement('style'); style.textContent = CSS; d.head.appendChild(style);
+      block.classList.add('rmi-form'); d.body.appendChild(block);
+      form = block;
+      d.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+      new frame.contentWindow.ResizeObserver(fit).observe(block);
+      fit();
+      if (wanted) { wanted = null; show(); }
+    })();
+  }
+  function fit() {
+    if (!form) return;
+    var cs = getComputedStyle(box), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    var room = window.innerHeight - (big.matches ? 48 : top + 16) - pad;
+    frame.style.height = Math.max(120, Math.min(form.offsetHeight + 2, room)) + 'px';
+  }
+  function place() {
+    if (big.matches) { box.style.left = box.style.top = ''; fit(); return; }
+    // a phone: under the link, or as much higher as it takes for the whole form to fit
+    var cs = getComputedStyle(box), need = (form ? form.offsetHeight + 2 : 300) + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    top = Math.max(16, Math.min(where.top, window.innerHeight - 16 - need));
+    box.style.left = where.left + 'px'; box.style.top = top + 'px';
+    fit();
+  }
+  function show() { place(); veil.classList.add('open'); box.classList.add('open'); }
+  function open(at) {
+    if (at && typeof at === 'object') where = { left: at.left || 16, top: at.top || 160 };
+    if (!form) { wanted = true; load(); return; }
+    show();
+  }
+  function close() { veil.classList.remove('open'); box.classList.remove('open'); }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== PAGE || !e.data) return;
+    if (e.data.rmiHello) e.source.postMessage({ rmiContactHost: true }, PAGE);
+    if (e.data.rmiContact) open(e.data.rmiContact);
+    if (e.data.rmiContactClose) close();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  document.addEventListener('DOMContentLoaded', build);
+  // load the form quietly once the page is up, so the window opens at once
+  window.addEventListener('load', function () { setTimeout(load, 1500); });
+})();
+</script>

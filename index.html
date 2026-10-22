@@ -22,7 +22,7 @@
   /* ---- the bar */
   .bar { background: var(--bar); height: 250px; display: flex; align-items: center;
          padding: 0 32px; position: relative; z-index: 2; }
-  /* equal columns, so SYNTHS, EFFECTS and ABOUT US stand the same distance apart */
+  /* equal columns, so SYNTHS, EFFECTS, ABOUT US and CONTACT stand the same distance apart */
   .lists { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; column-gap: clamp(28px, 5vw, 64px); align-items: start; }
   .lists h3 { font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink); }
   .lists ul { list-style: none; }
@@ -30,8 +30,9 @@
   .lists a { color: var(--soft); text-decoration: none; transition: color .15s; }
   .lists a:hover { color: var(--ink); }
   .lists .about { display: block; font-weight: 400; font-size: 11px; letter-spacing: .24em; text-transform: uppercase;
-                  color: var(--ink); white-space: nowrap; transition: opacity .15s; }
+                  color: var(--ink); white-space: nowrap; text-align: left; transition: opacity .15s; }
   .lists .about:hover { opacity: .55; }
+  .lists .links { display: contents; }               /* ABOUT US and CONTACT: a column each */
 
   /* About Us: a small frosted window under its link; any click closes it */
   .aboutbox { position: absolute; z-index: 20; width: min(440px, calc(100vw - 32px)); padding: 30px 34px 32px;
@@ -125,20 +126,21 @@
   /* ---- the small print */
   .legal { text-align: center; font-size: 11px; letter-spacing: .02em; color: var(--soft); padding: 0 16px 28px; }
 
+  @media (max-width: 860px) {
+    /* no room for four columns beside the logo: ABOUT US and CONTACT make a row under SYNTHS and EFFECTS */
+    .lists { grid-auto-flow: row; grid-template-columns: repeat(2, max-content); row-gap: 22px; }
+  }
   @media (max-width: 640px) {
     .legal { font-size: 10px; letter-spacing: 0; text-wrap: balance; }   /* one line won't fit a phone readably: two even lines */
-    .bar { height: 150px; padding: 0 16px; }
+    .bar { height: 176px; padding: 0 16px; }
     .films .grid figure, .films .grid.two-three figure:nth-child(-n+2) { grid-column: 1 / -1; }
     .films .grid.pair figure { grid-column: 1 / -1; }
-    /* no room for a third column beside the logo: ABOUT US stands at the foot of the effects */
-    .lists { grid-auto-flow: row; grid-template-columns: repeat(2, max-content); column-gap: 22px; }
-    .lists > div:nth-child(2) { grid-column: 2; grid-row: 1; }
-    .lists > div:nth-child(3) { grid-column: 2; grid-row: 1; align-self: end; }
+    .lists { column-gap: 22px; row-gap: 16px; }
     .lists h3, .lists .about { font-size: 10px; }
     .lists h3 { margin-bottom: 6px; }
     .lists li { font-size: 12.5px; line-height: 1.5; }
     /* the frame runs past the right edge, so the logo sits further right than its middle */
-    .badgebox { width: 218px; height: 207px; top: -28px; right: 0; }
+    .badgebox { width: 218px; height: 207px; top: -15px; right: 0; }
     .bar .badge { width: 268px; height: 207px; }
   }
 </style>
@@ -468,7 +470,8 @@ $('films').innerHTML = FILMS.map(([title, layout, list]) => `<h2>${title}</h2><d
 // the lists in the bar: every instrument, each a link to its film
 $('lists').innerHTML = FILMS.slice(0, 2).map(([title, , list]) => `<div><h3>${title}</h3><ul>` +
   list.map(([file, name]) => `<li><a href="#film-${file}">${name}</a></li>`).join('') + '</ul></div>').join('') +
-  '<div><button class="about" id="about" aria-haspopup="dialog" aria-expanded="false">About Us</button></div>';
+  '<div class="links"><button class="about" id="about" aria-haspopup="dialog" aria-expanded="false">About Us</button>' +
+  '<button class="about" id="contact" aria-haspopup="dialog">Contact</button></div>';
 $('lists').addEventListener('click', e => {
   const a = e.target.closest('a[href]'); if (!a) return;
   e.preventDefault();
@@ -505,7 +508,23 @@ const aboutOpen = () => aboutBox.classList.contains('open');
 document.addEventListener('click', e => {
   if (aboutOpen()) { e.preventDefault(); e.stopPropagation(); closeAbout(); }
   else if (e.target.closest('#about')) openAbout();
+  else if (e.target.closest('#contact')) openContact();
 }, true);
+
+/* CONTACT: the form is the Contact page of robynmiller.net, and only that site can send it, so inside
+   the Squarespace page the host page opens the window (its header code). Seen anywhere else, the
+   Contact page opens in a new tab. */
+let contactHost = null;
+addEventListener('message', e => {
+  if (e.data && e.data.rmiContactHost && /^https:\/\/(www\.)?robynmiller\.net$/.test(e.origin)) contactHost = e.origin;
+});
+function openContact() {
+  if (!contactHost) { window.open('https://www.robynmiller.net/contact', '_blank', 'noopener'); return; }
+  // where the window goes on a phone or a small window: under the link, as About Us does
+  const r = $('contact').getBoundingClientRect(), w = Math.min(440, innerWidth - 32);
+  parent.postMessage({ rmiContact: { left: Math.max(16, Math.min(r.left - 34, innerWidth - w - 16)), top: Math.max(16, r.bottom + 14) } }, contactHost);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && contactHost) parent.postMessage({ rmiContactClose: true }, contactHost); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && aboutOpen()) closeAbout(); });
 addEventListener('blur', () => { if (aboutOpen()) closeAbout(); });       // a click on the logo, or outside the page
 addEventListener('resize', () => { if (aboutOpen()) closeAbout(); });
