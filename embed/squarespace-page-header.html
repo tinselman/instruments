@@ -9,7 +9,7 @@
   #page .sqs-code-container { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5; background: #f0f0ee; }
   .rmi-frame { display: block; width: 100%; height: 100%; border: 0; }
 
-  /* the Contact and Stay tuned windows: the About Us window's look, with the site's own forms inside */
+  /* the Contact window (CONTACT and "Stay tuned!" open it): the About Us window's look, with the site's own form inside */
   .rmi-veil { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 60; display: none; }
   .rmi-veil.open { display: block; }
   /* closed, a window is gone altogether (display: none), so nothing invisible sits over the page to catch a swipe */
@@ -27,15 +27,14 @@
   }
 </style>
 <script>
-/* CONTACT and "Stay tuned!" on the instruments page ask this page to open their windows. Each form is a page of
-   this site, loaded here and stripped to its form: being on this site, it can send. How the forms look is in
-   forms.css on the instruments page's site, so it can change without a new paste. */
+/* CONTACT and "Stay tuned!" on the instruments page ask this page to open the Contact window. The form is this
+   site's Contact page, loaded here and stripped to its form: being on this site, it can send. How it looks is in
+   forms.css on the instruments page's site, so that can change without a new paste. */
 (function () {
   var PAGE = 'https://tinselman.github.io', STYLE = PAGE + '/instruments/embed/forms.css';
   var FONT = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400&display=swap';
   var WINDOWS = {
-    contact: { url: '/contact', block: '.sqs-block-form', label: 'Contact' },
-    news: { url: '/stay-tuned', block: '.sqs-block-newsletter, .newsletter-block', label: 'Stay tuned' }
+    contact: { url: '/contact', block: '.sqs-block-form', label: 'Contact' }
   };
   var big = window.matchMedia('(min-width: 1100px) and (min-height: 600px)');
   var veil, showing = null;
@@ -48,7 +47,7 @@
     window.addEventListener('resize', function () { if (showing) place(showing); });
     // tell the instruments page this page can show its windows
     var page = document.querySelector('.rmi-frame');
-    if (page) page.addEventListener('load', function () { page.contentWindow.postMessage({ rmiContactHost: true, rmiNewsHost: true }, PAGE); });
+    if (page) page.addEventListener('load', function () { page.contentWindow.postMessage({ rmiContactHost: true }, PAGE); });
   }
   function make(w) {
     w.box = document.createElement('div'); w.box.className = 'rmi-window';
@@ -118,19 +117,17 @@
 
   window.addEventListener('message', function (e) {
     if (e.origin !== PAGE || !e.data) return;
-    if (e.data.rmiHello) e.source.postMessage({ rmiContactHost: true, rmiNewsHost: true }, PAGE);
+    if (e.data.rmiHello) e.source.postMessage({ rmiContactHost: true }, PAGE);
     if (e.data.rmiContact) open('contact', e.data.rmiContact);
-    if (e.data.rmiNews) open('news', e.data.rmiNews);
     if (e.data.rmiContactClose) close();
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   document.addEventListener('DOMContentLoaded', build);
-  // on a computer, load the forms quietly once the page is up, so the windows open at once; a phone loads
-  // each only when it is asked for (two whole pages loading behind it would slow its scrolling)
+  // on a computer, load the form quietly once the page is up, so the window opens at once; a phone loads it
+  // only when it is asked for (a whole page loading behind it would slow its scrolling)
   window.addEventListener('load', function () {
     if (window.matchMedia('(hover: none)').matches) return;
     setTimeout(function () { load(WINDOWS.contact); }, 1500);
-    setTimeout(function () { load(WINDOWS.news); }, 3000);
   });
 })();
 </script>
