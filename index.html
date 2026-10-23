@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robyn Miller Instruments</title>
+<script>if (window.parent !== window) document.documentElement.classList.add('framed');</script>
 <meta name="description" content="The magic of physical modeling: synths and effects by Robyn Miller.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +19,11 @@
   /* at the top or bottom, a swipe stays with this page: passed on to the Squarespace page around it, it stuck
      there, and the way back up took several tries (her iPhone) */
   html, body { overscroll-behavior-y: contain; }
+  /* inside the Squarespace page (a frame filling the screen) the page scrolls in a box of its own, not as the
+     frame's document: an iPhone latched a swipe that reached the end onto the page around the frame and was slow
+     to give it back. A box that never passes a swipe on can't do that. */
+  html.framed { height: 100%; overflow: hidden; }
+  html.framed body { height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   body { background: var(--page); color: var(--ink); font-family: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
          font-weight: 300; -webkit-font-smoothing: antialiased; }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
@@ -592,7 +598,7 @@ function openFilm(file, name) {
   const v = $('theatreVideo');
   v.src = url; v.setAttribute('aria-label', name);
   $('theatre').classList.add('open');
-  document.documentElement.style.overflow = 'hidden';
+  document.documentElement.style.overflow = document.body.style.overflow = 'hidden';
   v.play().catch(() => {});
 }
 function closeFilm() {
@@ -600,7 +606,7 @@ function closeFilm() {
   if (document.fullscreenElement) document.exitFullscreen();
   v.pause(); v.removeAttribute('src'); v.load();
   $('theatre').classList.remove('open');
-  document.documentElement.style.overflow = '';
+  document.documentElement.style.overflow = document.body.style.overflow = '';
 }
 $('theatreClose').addEventListener('click', closeFilm);
 addEventListener('keydown', e => { if (e.key === 'Escape' && $('theatre').classList.contains('open') && !document.fullscreenElement) closeFilm(); });
