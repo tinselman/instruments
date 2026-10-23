@@ -125,8 +125,10 @@
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   document.addEventListener('DOMContentLoaded', build);
-  // load the forms quietly once the page is up, so the windows open at once
+  // on a computer, load the forms quietly once the page is up, so the windows open at once; a phone loads
+  // each only when it is asked for (two whole pages loading behind it would slow its scrolling)
   window.addEventListener('load', function () {
+    if (window.matchMedia('(hover: none)').matches) return;
     setTimeout(function () { load(WINDOWS.contact); }, 1500);
     setTimeout(function () { load(WINDOWS.news); }, 3000);
   });
